@@ -45,7 +45,9 @@ def home(request):
         return redirect('admin:index')
     exam = request.user.exam
     modules = exam.exammodule_set.all()
-    return render(request, 'exam/home.html', {'modules': modules} )
+    # return render(request, 'exam/home3.html')  # Después del Examen
+    # return render(request, 'exam/home2.html')  # Antes del Examen
+    return render(request, 'exam/home.html', {'modules': modules} ) # Durante el examen
 
 @login_required
 def question(request, module_id, question_id = 1):
@@ -84,6 +86,27 @@ def question(request, module_id, question_id = 1):
             question_breakdown.answer = answer
             question_breakdown.save()
         return redirect('exam:question', module_id, question_id + 1)
+
+@login_required
+def get_scores_with_modules(request):
+    if request.user.is_superuser:
+        results = []
+        exams = Exam.objects.filter(stage_id=4)
+        for e in exams:
+            scores = e.exammodule_set.all()
+            results.append({
+                'user': e.full_name(),
+                'email': e.user.email,
+                'career': e.career,
+                'mod_1': round(scores[0].score, 2),
+                'mod_2': round(scores[1].score, 2),
+                'mod_3': round(scores[2].score, 2),
+                'mod_4': round(scores[3].score, 2),
+                'final': round(e.score, 2)
+            })
+        return render(request, 'home/results.html', { 'results': results })
+    else:
+        return redirect('home')
 
 @login_required
 def save_module(request, module_id):

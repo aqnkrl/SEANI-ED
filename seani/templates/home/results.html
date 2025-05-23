@@ -1,0 +1,28 @@
+<table>
+    <thead>
+        <tr>
+            <th>Nombre Completo</th>
+            <th>Correo</th>
+            <th>Carrera</th>
+            <th>Comprensión Lectora</th>
+            <th>Estructura de la Lengua</th>
+            <th>Pensamiento Matemático</th>
+            <th>Pensamiento Analítico</th>
+            <th>Promedio</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for exam in results %}
+        <tr>
+            <td>{{ exam.user | title }}</td>
+            <td>{{ exam.email }}</td>
+            <td>{{ exam.career }}</td>
+            <td>{{ exam.mod_1 }}</td>
+            <td>{{ exam.mod_2 }}</td>
+            <td>{{ exam.mod_3 }}</td>
+            <td>{{ exam.mod_4 }}</td>
+            <td>{{ exam.final }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

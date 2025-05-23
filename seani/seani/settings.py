@@ -17,14 +17,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-e8#vx%@m+oytmp6&7mj16^e4$qz^9@!_h75s^7&0^2_l76fo@2'
+SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
+DEBUG = os.environ.get('DEBUG') == 'True'
 
 # DEBUG in False need an ip address or a domain in ALOWED HOSTS, This is in a Production Environment
+if os.environ.get('DEBUG') == 'True':
+    ALLOWED_HOSTS = []
+else:
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
 
 # Application definition
 
@@ -77,16 +79,24 @@ WSGI_APPLICATION = 'seani.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'seani24',
-        'USER': 'root',
-        'PASSWORD': 'example',
-        'HOST': 'localhost',
-        'PORT': 3306,
+if os.environ.get('DB_ENGINE') == 'sqlite3':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'djngo.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.' + os.environ.get('DB_ENGINE'),
+            'NAME': os.environ.get('DB_NAME'),
+            'USER': os.environ.get('DB_USER'),
+            'PASSWORD': os.environ.get('DB_PASSWORD'),
+            'HOST': os.environ.get('DB_HOST'),
+            'PORT': os.environ.get('DB_PORT'),
+        }
+    }
 
 
 # Password validation
@@ -139,8 +149,8 @@ LOGIN_REDIRECT_URL = '/exam/'
 LOGOUT_REDIRECT_URL = '/'
 
 cloudinary.config( 
-  cloud_name = str(os.environ.get('CLOUD_NAME')), 
-  api_key = str(os.environ.get('API_KEY')), 
-  api_secret = str(os.environ.get('API_SECRET')),
+  cloud_name = os.environ.get('CLOUD_NAME'), 
+  api_key = os.environ.get('API_KEY'), 
+  api_secret = os.environ.get('API_SECRET'),
   secure = True
 )
