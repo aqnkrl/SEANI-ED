@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect 
 from django.http import HttpResponse
 
 from django.contrib.auth.models import User
@@ -23,21 +23,22 @@ def create(request):
             career = form.cleaned_data['career']
             
             user = User.objects.create_user(
-                    username = username, 
-                    password = password, 
-                    email = email)
+                username=username, 
+                password=password, 
+                email=email
+            )
             user.first_name = first_name
             user.last_name = last_name
             user.save()
 
-            exam = Exam.objects.create(user = user, stage = stage, career = career)
+            exam = Exam.objects.create(user=user, stage=stage, career=career)
             exam.set_modules()
             exam.set_questions()
             form = CandidateForm()
             return render(request, 'exam/create.html', {'message': "Aspirante Registrado!", "form": form})
     
     form = CandidateForm()
-    return render(request, 'exam/create.html', { "form": form })
+    return render(request, 'exam/create.html', {"form": form})
 
 @login_required
 def home(request):
@@ -45,24 +46,21 @@ def home(request):
         return redirect('admin:index')
     exam = request.user.exam
     modules = exam.exammodule_set.all()
-    # return render(request, 'exam/home3.html')  # Después del Examen
-    # return render(request, 'exam/home2.html')  # Antes del Examen
-    return render(request, 'exam/home.html', {'modules': modules} ) # Durante el examen
+    return render(request, 'exam/home.html', {'modules': modules})
 
 @login_required
-def question(request, module_id, question_id = 1):
+def question(request, module_id, question_id=1):
     exam = request.user.exam
-
-    modules = exam.exammodule_set.filter(module_id = module_id)
+    modules = exam.exammodule_set.filter(module_id=module_id)
 
     if modules.count() == 0 or question_id <= 0:
         return redirect('exam:home')
-    if exam.exammodule_set.get(module_id = module_id).active == False:
+    if exam.exammodule_set.get(module_id=module_id).active == False:
         return redirect('exam:home')
+
     if request.method == 'GET':
         try:
-            # exam = request.user.exam
-            questions = exam.breakdown_set.filter(question__module_id = module_id)
+            questions = exam.breakdown_set.filter(question__module_id=module_id)
             question_breakdown = questions[question_id - 1]
             question = question_breakdown.question
             answer = question_breakdown.answer
@@ -71,15 +69,14 @@ def question(request, module_id, question_id = 1):
                 'module_id': module_id,
                 'question_id': question_id,
                 'answer': answer,
-                })
+            })
         except IndexError:
             exam.compute_score_by_module(module_id)
             exam.compute_score()
             return redirect('exam:home')
-        
+
     if request.method == 'POST':
-        # exam = request.user.exam
-        questions = exam.breakdown_set.filter(question__module_id = module_id)
+        questions = exam.breakdown_set.filter(question__module_id=module_id)
         question_breakdown = questions[question_id - 1]
         answer = request.POST['answer']
         if question_breakdown.answer != answer:
@@ -104,7 +101,7 @@ def get_scores_with_modules(request):
                 'mod_4': round(scores[3].score, 2),
                 'final': round(e.score, 2)
             })
-        return render(request, 'home/results.html', { 'results': results })
+        return render(request, 'home/results.html', {'results': results})
     else:
         return redirect('home')
 
@@ -127,16 +124,17 @@ def save_exam(request):
 def load_csv(request):
     if request.method == 'POST':
         form = LoadCSVForm(request.POST, request.FILES)
-        
+
         if form.is_valid():
-            
             file_csv = form.cleaned_data['file']
             stage = form.cleaned_data['stage']
             data_csv = file_csv.read().decode('utf-8').split('\n')
 
             data = []
+            duplicados = []  # Lista para los correos duplicados
+
             for index, line_ in enumerate(data_csv):
-                if index != 0:
+                if index != 0 and line_.strip():
                     line = line_.split(',')
                     data.append({
                         "first_name": line[0].strip(), 
@@ -144,24 +142,31 @@ def load_csv(request):
                         "email": line[2].strip(),
                         "password": line[3].strip(),
                         "career": line[4].strip()
-                        })
-                    
+                    })
+
             for item in data:
-                user = User.objects.create_user(
-                        username = item['email'],
-                        password = item['password'],
-                        email = item['email'])
-                user.first_name = item['first_name']
-                user.last_name = item['last_name']
-                user.save()
+                if not User.objects.filter(email=item['email']).exists():
+                    user = User.objects.create_user(
+                        username=item['email'],
+                        password=item['password'],
+                        email=item['email']
+                    )
+                    user.first_name = item['first_name']
+                    user.last_name = item['last_name']
+                    user.save()
 
-                career = Career.objects.get(short_name = item['career'])
+                    career = Career.objects.get(short_name=item['career'])
 
-                exam = Exam.objects.create(user = user, career = career, stage = stage )
-                exam.set_modules()
-                exam.set_questions()
-            
-            return render(request, 'exam/load_csv.html', {'message': "Carga de datos exitosa!"})
+                    exam = Exam.objects.create(user=user, career=career, stage=stage)
+                    exam.set_modules()
+                    exam.set_questions()
+                else:
+                    duplicados.append(item['email'])  # Guarda email duplicado
+
+            return render(request, 'exam/load_csv.html', {
+                'message': "Carga de datos exitosa!",
+                'duplicados': duplicados  #Pasar lista al template
+            })
 
     form = LoadCSVForm()
     return render(request, 'exam/load_csv.html', {"form": form})
