@@ -29,7 +29,7 @@
 {% endfor %}
 </div>
 <hr>
-<form action="{% url 'logout' %}" method="post">
+<form action="{% url 'home:logout' %}" method="post">
     {% csrf_token %}
     <input type="submit" value="Salir" class="exit">
 </form>
