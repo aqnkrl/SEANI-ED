@@ -136,9 +136,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [BASE_DIR / 'static'] # Comment this line in a Production enviconment
-# STATIC_ROOT = BASE_DIR / 'static/'     # Uncomment this line in a Production enviconment
+STATIC_URL = '/static/'                       # agrega la barra inicial
+STATICFILES_DIRS = [BASE_DIR / 'static']      # bien para desarrollo
+STATIC_ROOT = BASE_DIR / 'staticfiles'        # ✨ ruta destino para collectstati    
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect 
+from django.shortcuts import render, redirect
 from django.http import HttpResponse
 
 from django.contrib.auth.models import User
@@ -8,6 +8,9 @@ from .models import Exam, Stage
 from career.models import Career
 
 from .forms import CandidateForm, LoadCSVForm
+
+import csv
+import io
 
 def create(request):
     if request.method == 'POST':
@@ -46,7 +49,24 @@ def home(request):
         return redirect('admin:index')
     exam = request.user.exam
     modules = exam.exammodule_set.all()
+    # return home2(request)  # Mostrar pantalla antes al examen
+    # return home3(request)  # Mostrar pantalla despues al examen
     return render(request, 'exam/home.html', {'modules': modules})
+
+@login_required
+def home2(request):
+    if request.user.is_superuser:
+        return redirect('admin:index')
+    return render(request, 'exam/home2.html')
+
+
+@login_required
+def home3(request):
+    if request.user.is_superuser:
+        return redirect('admin:index')
+    return render(request, 'exam/home3.html')
+# --------------------------------------------------
+
 
 @login_required
 def question(request, module_id, question_id=1):
@@ -128,44 +148,54 @@ def load_csv(request):
         if form.is_valid():
             file_csv = form.cleaned_data['file']
             stage = form.cleaned_data['stage']
-            data_csv = file_csv.read().decode('utf-8').split('\n')
 
-            data = []
-            duplicados = []  # Lista para los correos duplicados
+            decoded = file_csv.read().decode('utf-8-sig')
+            reader = csv.reader(io.StringIO(decoded))
+            next(reader, None)  # Saltar encabezado
 
-            for index, line_ in enumerate(data_csv):
-                if index != 0 and line_.strip():
-                    line = line_.split(',')
-                    data.append({
-                        "first_name": line[0].strip(), 
-                        "last_name": line[1].strip(),
-                        "email": line[2].strip(),
-                        "password": line[3].strip(),
-                        "career": line[4].strip()
-                    })
+            duplicados = []
+            registrados = 0
 
-            for item in data:
-                if not User.objects.filter(email=item['email']).exists():
+            for row in reader:
+                if len(row) < 6 or not any(cell.strip() for cell in row):
+                    continue
+
+                first_name = row[0].strip().title()
+                last_name = row[1].strip().title()
+                email = row[2].strip().lower()
+                password = row[3].strip()
+                career_short = row[4].strip().upper()
+
+                # Obtener o crear la carrera por short_name
+                career, _ = Career.objects.get_or_create(
+                    short_name=career_short,
+                    defaults={"name": career_short.title()}
+                )
+
+                if not User.objects.filter(username=email).exists():
                     user = User.objects.create_user(
-                        username=item['email'],
-                        password=item['password'],
-                        email=item['email']
+                        username=email,
+                        email=email,
+                        password=password,
+                        first_name=first_name,
+                        last_name=last_name,
                     )
-                    user.first_name = item['first_name']
-                    user.last_name = item['last_name']
-                    user.save()
-
-                    career = Career.objects.get(short_name=item['career'])
 
                     exam = Exam.objects.create(user=user, career=career, stage=stage)
                     exam.set_modules()
                     exam.set_questions()
+
+                    registrados += 1
                 else:
-                    duplicados.append(item['email'])  # Guarda email duplicado
+                    duplicados.append(email)
+
+            mensaje = "Aspirante(s) registrado(s)!"
+            if duplicados:
+                mensaje += f" Correos duplicados: {', '.join(duplicados)}"
 
             return render(request, 'exam/load_csv.html', {
-                'message': "Carga de datos exitosa!",
-                'duplicados': duplicados  #Pasar lista al template
+                'message': mensaje,
+                'duplicados': duplicados,
             })
 
     form = LoadCSVForm()

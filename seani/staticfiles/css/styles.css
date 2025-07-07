@@ -1,0 +1,150 @@
+body {
+    font-family:Verdana, Geneva, Tahoma, sans-serif;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #eeeeee;
+}
+
+.container {
+    width: 70%;
+    min-width: 800px;
+    min-height: 100vh;
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    box-shadow: 0px 0px 10px 10px #cccccc;
+    display: grid;
+    place-items: center;
+}
+
+.welcome {
+	width: 75%;
+	margin: 20px auto;
+}
+
+.container a {
+    text-decoration: underline;
+    color: rgba(30, 30, 30, 0.7);
+    font-weight: bold;
+}
+
+.container p {
+	width: 60%;
+	margin: 20px auto;
+	text-align: justify;
+}
+
+.container .card {
+	display: inline-block;
+	width: 200px;
+	height: 130px;
+	border-radius: 20px;
+	padding: 20px;
+	margin: 20px 60px;
+	box-shadow: 0px 0px 10px 10px #eeeeee;
+}
+
+.container .card:hover { box-shadow: 0px 0px 10px 10px #cccccc; }
+
+.container input[type="text"],
+.container input[type="password"]{
+    width: 300px;
+    margin: 10px;
+    padding: 5px;
+}
+
+.container form input[type="submit"] {
+    border: none;
+    width: 180px;
+    height: 50px;
+	margin-top: 10px;
+    background-color: green;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.exit {
+	margin-bottom: 40px;
+} 
+
+.container h1 {
+	color: #2e7d32;
+}
+
+.container form input[type="submit"]:hover {
+    background-color: orange;
+}
+
+.container form input[type="submit"]:active {
+    background-color: orange;
+}
+
+.radio-section {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.container .logo {
+	width: 50%;
+	min-width: 500px;
+}
+
+.radio-item [type="radio"] {
+	display: none;
+}
+.radio-item + .radio-item {
+	margin-top: 15px;
+}
+.radio-item label {
+	display: block;
+	padding: 20px 60px;
+	background: rgba(0, 200, 0, 0.2);
+	border: 2px solid green;
+	border-radius: 8px;
+	cursor: pointer;
+	font-size: 18px;
+	font-weight: 400;
+	min-width: 250px;
+    max-width: 500px;
+	/* white-space: nowrap; */
+	position: relative;
+	transition: 0.4s ease-in-out 0s;
+}
+.radio-item label:after,
+.radio-item label:before {
+	content: "";
+	position: absolute;
+	border-radius: 50%;
+}
+.radio-item label:after {
+	display: none;
+	height: 19px;
+	width: 19px;
+	border: 2px solid green;
+	left: 19px;
+	top: calc(50% - 12px);
+}
+.radio-item label:before {
+	background: orange;
+	height: 20px;
+	width: 20px;
+	left: 21px;
+	top: calc(50%-5px);
+	transform: scale(5);
+	opacity: 0;
+	visibility: hidden;
+	transition: 0.4s ease-in-out 0s;
+}
+.radio-item [type="radio"]:checked ~ label {
+	border: 4px solid orange;
+}
+.radio-item [type="radio"]:checked ~ label::before {
+	opacity: 1;
+	visibility: visible;
+	transform: scale(1);
+}

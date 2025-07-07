@@ -1,37 +1,75 @@
 {% extends 'base.html' %}
-
 {% block title %}Home Aspirante{% endblock %}
 
 {% block content %}
 {% load static %}
-<h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
-<hr>
-<h2 class="welcome">Bienvenido al Sistema de Evaluación para Aspirantes de Nuevo Ingreso SEANI 2025</h2>
-<p>El examen que presentarás a continuación consta de 90 preguntas divididas en 4 módulos.</p>
-<p>El examen está programado para responderse en 120 minutos, sin embargo, estará activo desde las 9:00 hrs hasta las 13:00 hrs por lo que si ingresaste más tarde aún tendrás tiempo de responder</p>
-<p>Las preguntas son de opción múltiple como se muestra en la siguiente imagen</p>
-<img src="{% static 'images/pregunta.png' %}" alt="Ejemplo Pregunta" width="400px">
-<p>Selecciona la opción que consideres la correcta, esta se guardará en cuanto le des click al botón siguiente</p>
-<p>Al darle click sobre el módulo se mostrará la primera pregunta correspondiente</p>
-<p>La navegación entre las preguntas de cada módulo es hacia adelante, al llegar a la última automáticamente te regresará a esta pantalla.</p>
-<p>Si quisieras revisar tus respuestas o responder alguna que te haya faltado hay que ingresar nuevamente al módulo y navegar hacia adelante.</p>
-<p>Al finalizar los 4 módulos dale click al botón Salir.</p>
-<p>Los resultados serán publicados posteriormente en la página de la Universidad.</p>
-<hr>
-<div class="card-container">
-{% for module in modules %}
-<a href="{% url 'exam:question' module.module.id %}">
-    <div class="card">
-        <h3>{{ module }}</h3>
-        <p>{{ module.module.num_questions }} Preguntas</p>
-    </div>
-</a>
-{% endfor %}
+
+<!-- Barra SEANI -->
+<div class="seani-barra">
+    <h1>SEANI 2025</h1>
 </div>
-<hr>
-<form action="{% url 'logout' %}" method="post">
-    {% csrf_token %}
-    <input type="submit" value="Salir" class="exit">
-</form>
+<div class="seani-espacio"></div>
+
+<!-- Contenido -->
+<div class="seani-contenido">
+    <div class="barra-superior">
+            <h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
+        <div class="boton-salir">
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <input type="submit" value="Salir" class="exit">
+            </form>
+        </div>
+    </div>
+    <hr>
+
+    <h2 class="welcome">Bienvenido al Sistema de Evaluación para Aspirantes de Nuevo Ingreso SEANI 2025</h2>
+
+    <ul>
+        <li>
+            El examen que presentarás a continuación consta de 90 preguntas divididas en 4 módulos:
+            <ul>
+                <li><strong>Módulo 1:</strong> Comprensión lectora (15 preguntas)</li>
+                <li><strong>Módulo 2:</strong> Estructura de la lengua (24 preguntas)</li>
+                <li><strong>Módulo 3:</strong> Pensamiento matemático (23 preguntas)</li>
+                <li><strong>Módulo 4:</strong> Pensamiento analítico (28 preguntas)</li>
+            </ul>
+        </li>
+        <li>El examen está programado para responderse en 120 minutos. Sin embargo, estará activo entre las 9:00 hrs y las 13:00 hrs.</li>
+        <li>Si ingresaste después de las 9:00, aún puedes realizarlo dentro de ese rango de tiempo.</li>
+        <li>Las preguntas son de opción múltiple. A continuación se muestra un ejemplo:</li>
+    </ul>
+
+    <div class="centrado">
+        <img src="{% static 'images/pregunta2.png' %}" alt="Ejemplo Pregunta" width="400px">
+    </div>
+
+    <ul>
+        <li><strong>Instrucciones importantes:</strong>
+            <ul>
+                <li>Haz clic sobre el módulo que deseas comenzar. Se mostrará la primera pregunta correspondiente.</li>
+                <li>La navegación dentro de cada módulo es únicamente hacia adelante.</li>
+                <li>Al llegar a la última pregunta, automáticamente regresarás a esta pantalla.</li>
+                <li>Si necesitas revisar o completar alguna respuesta, puedes volver a ingresar al módulo correspondiente y avanzar hasta la pregunta deseada.</li>
+                <li>Una vez que hayas terminado los 4 módulos, haz clic en el botón “Salir”.</li>
+                <li>Los resultados serán publicados posteriormente en la página oficial de la Universidad.</li>
+            </ul>
+        </li>
+    </ul>
+
+    <hr>
+    <h2 class="titulo-rojo">Selecciona un modúlo para comenzar</h2>
+    <div class="card-container">
+        {% for module in modules %}
+        <a href="{% url 'exam:question' module.module.id %}">
+            <div class="card">
+                <h3>{{ module }}</h3>
+                <p>{{ module.module.num_questions }} Preguntas</p>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    <hr>
+
+</div>
 {% endblock %}
-    
