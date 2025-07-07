@@ -7,7 +7,7 @@ from django.contrib.auth.decorators import login_required
 from .models import Exam, Stage
 from career.models import Career
 
-from .forms import CandidateForm, LoadCSVForm
+from .forms import CandidateForm, LoadCSVForm, StageForm
 
 def create(request):
     if request.method == 'POST':
@@ -120,6 +120,23 @@ def save_exam(request):
         exam.compute_score()
         return redirect('exam:home')
     return redirect('exam:home')
+
+@login_required
+def home_results(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    form = StageForm(request.GET or None)
+    exams = []
+
+    if form.is_valid():
+        selected_stage = form.cleaned_data['stage']
+        exams = Exam.objects.filter(stage=selected_stage).select_related('user', 'career')
+
+    return render(request, 'home/results.html', {
+    'form': form,
+    'exams': exams
+})
 
 def load_csv(request):
     if request.method == 'POST':
