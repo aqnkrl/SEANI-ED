@@ -1,28 +1,40 @@
-<table>
-    <thead>
-        <tr>
-            <th>Nombre Completo</th>
-            <th>Correo</th>
-            <th>Carrera</th>
-            <th>Comprensión Lectora</th>
-            <th>Estructura de la Lengua</th>
-            <th>Pensamiento Matemático</th>
-            <th>Pensamiento Analítico</th>
-            <th>Promedio</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for exam in results %}
-        <tr>
-            <td>{{ exam.user | title }}</td>
-            <td>{{ exam.email }}</td>
-            <td>{{ exam.career }}</td>
-            <td>{{ exam.mod_1 }}</td>
-            <td>{{ exam.mod_2 }}</td>
-            <td>{{ exam.mod_3 }}</td>
-            <td>{{ exam.mod_4 }}</td>
-            <td>{{ exam.final }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<h2>Resultados por etapa</h2>
+
+<form method="get">
+    {{ form.as_p }}
+    <button type="submit">Buscar</button>
+</form>
+
+{% if exams %}
+    <h3>Resultados de la etapa {{ form.cleaned_data.stage }}</h3>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Nombre Completo</th>
+                <th>Correo</th>
+                <th>Carrera</th>
+                <th>Comprensión Lectora</th>
+                <th>Estructura de la Lengua</th>
+                <th>Pensamiento Matemático</th>
+                <th>Pensamiento Analítico</th>
+                <th>Promedio</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for exam in exams %}
+            <tr>
+                <td>{{ exam.full_name }}</td>
+                <td>{{ exam.user.email }}</td>
+                <td>{{ exam.career.name }}</td>
+                <td>{{ exam.exammodule_set.all.0.score|floatformat:2 }}</td>
+                <td>{{ exam.exammodule_set.all.1.score|floatformat:2 }}</td>
+                <td>{{ exam.exammodule_set.all.2.score|floatformat:2 }}</td>
+                <td>{{ exam.exammodule_set.all.3.score|floatformat:2 }}</td>
+                <td>{{ exam.score|floatformat:2 }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% elif form.is_bound %}
+    <p>No se encontraron exámenes para esta etapa.</p>
+{% endif %}

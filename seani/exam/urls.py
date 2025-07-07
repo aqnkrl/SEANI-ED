@@ -12,4 +12,5 @@ urlpatterns = [
     path('module/<int:module_id>/save/', views.save_module, name='save'),
     path('save/', views.save_exam, name='save_exam'),
     path('results/', views.get_scores_with_modules, name="results"),
+    path('results/stage/', views.home_results, name='home_results'),  # <-- Ruta nueva
 ]
