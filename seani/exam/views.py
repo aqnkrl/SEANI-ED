@@ -12,37 +12,7 @@ from .forms import CandidateForm, LoadCSVForm, StageForm
 import csv
 import io
 
-def create(request):
-    if request.method == 'POST':
-        form = CandidateForm(request.POST)
-    
-        if form.is_valid():
-            first_name = form.cleaned_data['first_name']
-            last_name = form.cleaned_data['last_name']
-            email = form.cleaned_data['email']
-            username = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            stage = form.cleaned_data['stage']
-            career = form.cleaned_data['career']
-            
-            user = User.objects.create_user(
-                username=username, 
-                password=password, 
-                email=email
-            )
-            user.first_name = first_name
-            user.last_name = last_name
-            user.save()
-
-            exam = Exam.objects.create(user=user, stage=stage, career=career)
-            exam.set_modules()
-            exam.set_questions()
-            form = CandidateForm()
-            return render(request, 'exam/create.html', {'message': "Aspirante Registrado!", "form": form})
-    
-    form = CandidateForm()
-    return render(request, 'exam/create.html', {"form": form})
-
+### Views for Aspirantes
 @login_required
 def home(request):
     if request.user.is_superuser:
@@ -66,7 +36,6 @@ def home3(request):
         return redirect('admin:index')
     return render(request, 'exam/home3.html')
 # --------------------------------------------------
-
 
 @login_required
 def question(request, module_id, question_id=1):
@@ -105,27 +74,6 @@ def question(request, module_id, question_id=1):
         return redirect('exam:question', module_id, question_id + 1)
 
 @login_required
-def get_scores_with_modules(request):
-    if request.user.is_superuser:
-        results = []
-        exams = Exam.objects.filter(stage_id=4)
-        for e in exams:
-            scores = e.exammodule_set.all()
-            results.append({
-                'user': e.full_name(),
-                'email': e.user.email,
-                'career': e.career,
-                'mod_1': round(scores[0].score, 2),
-                'mod_2': round(scores[1].score, 2),
-                'mod_3': round(scores[2].score, 2),
-                'mod_4': round(scores[3].score, 2),
-                'final': round(e.score, 2)
-            })
-        return render(request, 'home/results.html', {'results': results})
-    else:
-        return redirect('home')
-
-@login_required
 def save_module(request, module_id):
     if request.method == 'POST':
         exam = request.user.exam
@@ -141,22 +89,36 @@ def save_exam(request):
         return redirect('exam:home')
     return redirect('exam:home')
 
-@login_required
-def home_results(request):
-    if not request.user.is_superuser:
-        return redirect('home')
+#### Views for Admin
+def create(request):
+    if request.method == 'POST':
+        form = CandidateForm(request.POST)
+    
+        if form.is_valid():
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            email = form.cleaned_data['email']
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+            stage = form.cleaned_data['stage']
+            career = form.cleaned_data['career']
+            
+            user = User.objects.create_user(
+                    username = username, 
+                    password = password, 
+                    email = email)
+            user.first_name = first_name
+            user.last_name = last_name
+            user.save()
 
-    form = StageForm(request.GET or None)
-    exams = []
-
-    if form.is_valid():
-        selected_stage = form.cleaned_data['stage']
-        exams = Exam.objects.filter(stage=selected_stage).select_related('user', 'career')
-
-    return render(request, 'home/results.html', {
-    'form': form,
-    'exams': exams
-})
+            exam = Exam.objects.create(user = user, stage = stage, career = career)
+            exam.set_modules()
+            exam.set_questions()
+            form = CandidateForm()
+            return render(request, 'admin/exam/create.html', {'message': "Aspirante Registrado!", "form": form})
+    
+    form = CandidateForm()
+    return render(request, 'admin/exam/create.html', { "form": form })
 
 def load_csv(request):
     if request.method == 'POST':
@@ -210,10 +172,48 @@ def load_csv(request):
             if duplicados:
                 mensaje += f" Correos duplicados: {', '.join(duplicados)}"
 
-            return render(request, 'exam/load_csv.html', {
+            return render(request, 'admin/exam/load_csv.html', {
                 'message': mensaje,
                 'duplicados': duplicados,
             })
 
     form = LoadCSVForm()
-    return render(request, 'exam/load_csv.html', {"form": form})
+    return render(request, 'admin/exam/load_csv.html', {"form": form})
+
+@login_required
+def get_scores_with_modules(request):
+    if request.user.is_superuser:
+        results = []
+        exams = Exam.objects.filter(stage_id=4)
+        for e in exams:
+            scores = e.exammodule_set.all()
+            results.append({
+                'user': e.full_name(),
+                'email': e.user.email,
+                'career': e.career,
+                'mod_1': round(scores[0].score, 2),
+                'mod_2': round(scores[1].score, 2),
+                'mod_3': round(scores[2].score, 2),
+                'mod_4': round(scores[3].score, 2),
+                'final': round(e.score, 2)
+            })
+        return render(request, 'home/results.html', { 'results': results })
+    else:
+        return redirect('home')
+
+@login_required
+def home_results(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    form = StageForm(request.GET or None)
+    exams = []
+
+    if form.is_valid():
+        selected_stage = form.cleaned_data['stage']
+        exams = Exam.objects.filter(stage=selected_stage).select_related('user', 'career')
+
+    return render(request, 'home/results.html', {
+    'form': form,
+    'exams': exams
+})

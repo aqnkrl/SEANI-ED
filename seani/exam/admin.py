@@ -20,22 +20,3 @@ class ExamAdmin(admin.ModelAdmin):
     list_display = ['user', 'full_name', 'score', 'career', 'stage']
     list_filter = ['career', 'stage']
     inlines = [ExamModuleInline]
-
-class CustomExamAdmin(admin.ModelAdmin):
-    model = CustomExam
-
-    def get_urls(self):
-        view_name = '{}_{}_changelist'.format(self.model._meta.app_label, self.model._meta.model_name)
-        return [
-            path('create/', create, name=view_name),]
-    
-admin.site.register(CustomExam, CustomExamAdmin)
-
-class LoadCSVAdmin(admin.ModelAdmin):
-    model = LoadCSV
-    def get_urls(self):
-        view_name = '{}_{}_changelist'.format(self.model._meta.app_label, self.model._meta.model_name)
-        return [
-            path('load/', load_csv, name=view_name),]
-    
-admin.site.register(LoadCSV, LoadCSVAdmin)

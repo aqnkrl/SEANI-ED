@@ -15,7 +15,7 @@
     <div class="barra-superior">
             <h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
         <div class="boton-salir">
-            <form action="{% url 'logout' %}" method="post">
+            <form action="{% url 'home:logout' %}" method="post">
                 {% csrf_token %}
                 <input type="submit" value="Salir" class="exit">
             </form>
