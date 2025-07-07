@@ -3,50 +3,69 @@
 {% block title %}Módulo{% endblock %}
 
 {% block content %}
+<div class="seani-barra2">
+    <h1>SEANI 2025</h1>
+</div>
+<div class="seani-espacio2"></div>
 <!-- Pregunta -->
-<h1>{{ question.module }}</h1>
+<h1 class="title-question"> Módulo | {{ question.module }}</h1>
 <hr>
-<a href="{% url 'exam:home' %}">Regresar a Módulos</a>
+<a href="{% url 'exam:home' %}" class="question">Regresar a Módulos</a>
 <hr>
 {% if question.question_image %}
-<img src="{{ question.question_image.url }}" width="600px">    
+<div class="imagen-pregunta">
+    <img src="{{ question.question_image.url }}" width="600px">
+</div>
 {% endif %}
+
 {% if question.question_text %}
     <h2>{{ question.question_text }}</h2>
-{% endif %}
-<form method="post" action="{% url 'exam:question' module_id question_id %}">
+{% endif %} 
+
+<form method="post"
+      action="{% url 'exam:question' module_id question_id %}"
+      class="formulario-exam">
     {% csrf_token %}
-    <section class="radio-section">
-        <div class="radio-list">
-    <h3>Selecciona la respuesta Correcta:</h3>
-    <input type="radio" id="ans0" 
-            name="answer" value="-" 
-            style="display: none;" {% if answer == '-' %}checked{% endif %}>
-    <div class="radio-item">
-            <input type="radio" id="ans1" name="answer" value="A" {% if answer == 'A' %}checked{% endif %}>
-    <label for="ans1">{{ question.answer1 }}</label>
-</div>
-    <div class="radio-item">
-    <input type="radio" id="ans2" name="answer" value="B" {% if answer == 'B' %}checked{% endif %}>
-    <label for="ans2">{{ question.answer2 }}</label>
-</div>
-    {% if question.answer3 %}
-    <div class="radio-item">
-    <input type="radio" id="ans3" name="answer" value="C" {% if answer == 'C' %}checked{% endif %}>
-    <label for="ans3">{{ question.answer3 }}</label>
-</div>
-    {% endif %}
-    {% if question.answer4 %}
-    <div class="radio-item">
-    <input type="radio" id="ans4" name="answer" value="D" {% if answer == 'D' %}checked{% endif %}>
-    <label for="ans4">{{ question.answer4 }}</label>
-</div>
-    {% endif %}
-    <br>
-    </div>
+
+    <section class="bloque-pregunta">
+        <h3 class="titulo-pregunta">Selecciona la respuesta correcta:</h3>
+
+        <input type="radio" id="ans0"
+               name="answer" value="-"
+               class="radio-oculto"
+               {% if answer == '-' %}checked{% endif %}>
+
+        <div class="lista-opciones">
+            <div class="opcion">
+                <input type="radio" id="ans1" name="answer" value="A"
+                       {% if answer == 'A' %}checked{% endif %}>
+                <label for="ans1">{{ question.answer1 }}</label>
+            </div>
+
+            <div class="opcion">
+                <input type="radio" id="ans2" name="answer" value="B"
+                       {% if answer == 'B' %}checked{% endif %}>
+                <label for="ans2">{{ question.answer2 }}</label>
+            </div>
+
+            {% if question.answer3 %}
+            <div class="opcion">
+                <input type="radio" id="ans3" name="answer" value="C"
+                       {% if answer == 'C' %}checked{% endif %}>
+                <label for="ans3">{{ question.answer3 }}</label>
+            </div>
+            {% endif %}
+
+            {% if question.answer4 %}
+            <div class="opcion">
+                <input type="radio" id="ans4" name="answer" value="D"
+                       {% if answer == 'D' %}checked{% endif %}>
+                <label for="ans4">{{ question.answer4 }}</label>
+            </div>
+            {% endif %}
+        </div>
     </section>
-    <input type="submit" value="Siguiente">
-    <br>
-    <br>
+<button type="submit" class="boton-question">Siguiente</button>
 </form>
+
 {% endblock %}

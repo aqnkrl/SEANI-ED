@@ -6,6 +6,8 @@
 {% load static %}
 <h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
 <hr>
+<img src="{% static 'images/mascotaUtt.png' %}" alt="Logo UTT" class="guerrero">
+
 <h2 class="welcome">Espera Resultados en la Página de la Universidad</h2>
 <hr>
 <form action="{% url 'logout' %}" method="post">

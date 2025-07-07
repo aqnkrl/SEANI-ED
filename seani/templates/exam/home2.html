@@ -6,7 +6,8 @@
 {% load static %}
 <h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
 <hr>
-<h2 class="welcome">El examen estará habilitado hasta el día -- de -- de 2025 a partir de las 9:00</h2>
+<img src="{% static 'images/mascotaUtt.png' %}" alt="Logo UTT" class="guerrero">
+<h2 class="welcome">El examen estará habilitado hasta el día -- de -- de 2025 a partir de las 9:00 hrs</h2>
 <hr>
 <form action="{% url 'logout' %}" method="post">
     {% csrf_token %}
