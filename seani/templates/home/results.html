@@ -1,40 +1,63 @@
-<h2>Resultados por etapa</h2>
+{% extends 'base_admin.html' %}
+{% load static %}
 
-<form method="get">
-    {{ form.as_p }}
-    <button type="submit">Buscar</button>
-</form>
+{% block title %}Resultados por etapa{% endblock %}
 
-{% if exams %}
-    <h3>Resultados de la etapa {{ form.cleaned_data.stage }}</h3>
-    <table border="1">
-        <thead>
-            <tr>
-                <th>Nombre Completo</th>
-                <th>Correo</th>
-                <th>Carrera</th>
-                <th>Comprensión Lectora</th>
-                <th>Estructura de la Lengua</th>
-                <th>Pensamiento Matemático</th>
-                <th>Pensamiento Analítico</th>
-                <th>Promedio</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for exam in exams %}
-            <tr>
-                <td>{{ exam.full_name }}</td>
-                <td>{{ exam.user.email }}</td>
-                <td>{{ exam.career.name }}</td>
-                <td>{{ exam.exammodule_set.all.0.score|floatformat:2 }}</td>
-                <td>{{ exam.exammodule_set.all.1.score|floatformat:2 }}</td>
-                <td>{{ exam.exammodule_set.all.2.score|floatformat:2 }}</td>
-                <td>{{ exam.exammodule_set.all.3.score|floatformat:2 }}</td>
-                <td>{{ exam.score|floatformat:2 }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% elif form.is_bound %}
-    <p>No se encontraron exámenes para esta etapa.</p>
-{% endif %}
+{% block content %}
+    <h1 class="bienvenida">Resultados por etapa</h1>
+
+<div class="formulario-center">
+    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1;">
+            {{ form.stage.label_tag }}
+            {{ form.stage }}
+        </div>
+        <div style="flex: 1;">
+            {{ form.career.label_tag }}
+            {{ form.career }}
+        </div>
+        <div>
+            <button type="submit" class="guardar">Buscar</button>
+        </div>
+    </form>
+</div>
+
+
+    {% if exams %}
+        <h3>Resultados de la etapa {{ form.cleaned_data.stage }}</h3>
+
+        <div class="table-wrapper">
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Nombre Completo</th>
+                        <th>Correo</th>
+                        <th>Carrera</th>
+                        <th>Comprensión Lectora</th>
+                        <th>Estructura de la Lengua</th>
+                        <th>Pensamiento Matemático</th>
+                        <th>Pensamiento Analítico</th>
+                        <th>Promedio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for exam in exams %}
+                    <tr>
+                        <td>{{ exam.full_name }}</td>
+                        <td>{{ exam.user.email }}</td>
+                        <td>{{ exam.career.name }}</td>
+                        <td>{{ exam.exammodule_set.all.0.score|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.1.score|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.2.score|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.3.score|floatformat:2 }}</td>
+                        <td>{{ exam.score|floatformat:2 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% elif form.is_bound %}
+        <p>No se encontraron exámenes para esta etapa.</p>
+    {% endif %}
+{% endblock %}

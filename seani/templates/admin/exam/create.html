@@ -1,11 +1,22 @@
+{% extends 'base_admin.html' %}
+{% load static %}
 
-{% if message %}
-<p>{{ message }}</p>
-{% endif %}
+{% block title %}Agregar Aspirante{% endblock %}
 
-<h1>Agregar Aspirante</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Guardar">
-</form>
+{% block content %}
+    <h1 class="bienvenida">Agregar Aspirante</h1>
+
+    {% if message %}
+        <p class="mensaje">{{ message }}</p>
+    {% endif %}
+
+    <form method="post" class="formulario">
+        {% csrf_token %}
+        {{ form }}
+
+        <div class="acciones-doble">
+            <button type="submit" class="guardar">Guardar</button>
+            <a href="{% url 'home:admin' %}" class="cancelar">Cancelar</a>
+        </div>
+    </form>
+{% endblock %}

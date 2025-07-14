@@ -15,10 +15,16 @@ class CandidateForm(forms.Form):
 class LoadCSVForm(forms.Form):
     file = forms.FileField()
     stage = forms.ModelChoiceField(queryset=Stage.objects.all())
-
+    
 class StageForm(forms.Form):
     stage = forms.ModelChoiceField(
         queryset=Stage.objects.all(),
         label="Selecciona una etapa",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    career = forms.ModelChoiceField(
+        queryset=Career.objects.all(),
+        required=False,
+        label="Filtrar por carrera",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
