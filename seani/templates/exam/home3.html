@@ -8,11 +8,10 @@
 <hr>
 <img src="{% static 'images/mascotaUtt.png' %}" alt="Logo UTT" class="guerrero">
 
-<h2 class="welcome">Espera Resultados en la Página de la Universidad</h2>
+<h2 class="welcome">Espera Resultados en las cuentas oficiales de la Universidad</h2>
 <hr>
-<form action="{% url 'logout' %}" method="post">
+<form action="{% url 'exam:logout' %}" method="post">
     {% csrf_token %}
     <input type="submit" value="Salir" class="exit">
 </form>
 {% endblock %}
-    

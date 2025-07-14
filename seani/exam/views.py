@@ -3,6 +3,7 @@ from django.http import HttpResponse
 
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
 
 from .models import Exam, Stage
 from career.models import Career
@@ -12,22 +13,54 @@ from .forms import CandidateForm, LoadCSVForm, StageForm
 import csv
 import io
 
-### Views for Aspirantes
+
+# ------------------------
+from .models import HomeScreenSetting
+
 @login_required
 def home(request):
     if request.user.is_superuser:
         return redirect('admin:index')
+
+    screen_setting = HomeScreenSetting.objects.filter(is_active=True).first()
+
+    if screen_setting:
+        if screen_setting.screen_name == 'home2':
+            return home2(request)
+        elif screen_setting.screen_name == 'home3':
+            return home3(request)
+
     exam = request.user.exam
     modules = exam.exammodule_set.all()
-    # return home2(request)  # Mostrar pantalla antes al examen
-    # return home3(request)  # Mostrar pantalla despues al examen
     return render(request, 'exam/home.html', {'modules': modules})
+
+#-------------------------
+
+### Views for Aspirantes
+# @login_required
+# def home(request):
+#      if request.user.is_superuser:
+#          return redirect('admin:index')
+#      exam = request.user.exam
+#      modules = exam.exammodule_set.all()
+#      # return home2(request)  # Mostrar pantalla antes al examen
+#      # return home3(request)  # Mostrar pantalla despues al examen
+#      return render(request, 'exam/home.html', {'modules': modules})
+
+
+# @login_required
+# def home2(request):
+#     if request.user.is_superuser:
+#         return redirect('admin:index')
+#     return render(request, 'exam/home2.html')
 
 @login_required
 def home2(request):
     if request.user.is_superuser:
         return redirect('admin:index')
-    return render(request, 'exam/home2.html')
+
+    settings = HomeScreenSetting.objects.filter(screen_name='home2').first()
+    return render(request, 'exam/home2.html', {'settings': settings})
 
 
 @login_required

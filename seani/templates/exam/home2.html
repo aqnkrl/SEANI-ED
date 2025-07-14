@@ -7,11 +7,23 @@
 <h1>{{ user.exam.full_name }} - {{ user.exam.career }}</h1>
 <hr>
 <img src="{% static 'images/mascotaUtt.png' %}" alt="Logo UTT" class="guerrero">
-<h2 class="welcome">El examen estará habilitado hasta el día -- de -- de 2025 a partir de las 9:00 hrs</h2>
+
+{% if settings.display_date and settings.display_time %}
+    <h2 class="welcome">
+        El examen estará habilitado hasta el día {{ settings.display_date|date:"d \d\e F \d\e Y" }} 
+        a partir de las {{ settings.display_time|time:"H:i" }} hrs
+    </h2>
+{% elif settings.display_date %}
+    <h2 class="welcome">
+        El examen estará habilitado hasta el día {{ settings.display_date|date:"d \d\e F \d\e Y" }}
+    </h2>
+{% else %}
+    <h2 class="welcome">El examen estará habilitado próximamente.</h2>
+{% endif %}
+
 <hr>
-<form action="{% url 'logout' %}" method="post">
+<form action="{% url 'exam:logout' %}" method="post">
     {% csrf_token %}
     <input type="submit" value="Salir" class="exit">
 </form>
 {% endblock %}
-    
