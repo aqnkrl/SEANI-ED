@@ -201,6 +201,8 @@ def get_scores_with_modules(request):
     else:
         return redirect('home')
 
+# views.py
+
 @login_required
 def home_results(request):
     if not request.user.is_superuser:
@@ -211,9 +213,15 @@ def home_results(request):
 
     if form.is_valid():
         selected_stage = form.cleaned_data['stage']
-        exams = Exam.objects.filter(stage=selected_stage).select_related('user', 'career')
+        selected_career = form.cleaned_data.get('career')
+
+        exams = Exam.objects.filter(stage=selected_stage)
+        if selected_career:
+            exams = exams.filter(career=selected_career)
+
+        exams = exams.select_related('user', 'career')
 
     return render(request, 'home/results.html', {
-    'form': form,
-    'exams': exams
-})
+        'form': form,
+        'exams': exams
+    })

@@ -1,23 +1,31 @@
+{% extends 'base_admin.html' %}
+{% load static %}
+
+{% block title %}Cargar Aspirantes{% endblock %}
 
 {% block content %}
-  {% if message %}
-    <p style="color: green;">{{ message }}</p>
-  {% endif %}
+    <h1 class="bienvenida">Cargar Aspirantes</h1>
 
-  {% if duplicados %}
-    <div style="color: red; margin-top: 1em;">
-      <p>Los siguientes correos ya estaban registrados y no fueron cargados:</p>
-      <ul>
-        {% for email in duplicados %}
-          <li>{{ email }}</li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
+    {% if message %}
+        <p class="mensaje" style="color: green;">{{ message }}</p>
+    {% endif %}
 
-  <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form }}
-      <input type="submit" value="Aceptar">
-  </form>
+    {% if duplicados %}
+        <div class="mensaje" style="color: red; margin-top: 1em;">
+            <p>Los siguientes correos ya estaban registrados y no fueron cargados:</p>
+            <ul>
+                {% for email in duplicados %}
+                    <li>{{ email }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="formulario-center">
+    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <input type="submit" value="Aceptar" class="guardar" />
+    </form>
+</div>
 {% endblock %}

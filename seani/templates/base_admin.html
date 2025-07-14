@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SEANI 2025 - {% block title %}{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/admin_panel.css' %}" />
+</head>
+<body>
+    <div class="container">
+     
+        <aside class="sidebar">
+            <div class="logo">SEANI</div>
+            <div class="profile">
+                <div class="avatar">👤</div>
+                <div class="name">{{ user.get_full_name|default:user.username }}<br><span>Administrador</span></div>
+            </div>
+  <nav class="menu">
+    <p class="modulo">Módulos</p>
+
+    {% url 'home:admin' as url_admin %}
+    <a href="{{ url_admin }}" class="{% if request.resolver_match.url_name == 'admin' %}activo{% endif %}">Página Principal</a>
+
+    <a href="{% url 'admin:index' %}" class="{% if request.resolver_match.namespace == 'admin' %}activo{% endif %}">Panel de Django</a>
+
+    {% url 'exam:create' as create_url %}
+    <a href="{{ create_url }}" class="{% if request.resolver_match.url_name == 'create' %}activo{% endif %}">Registrar Aspirante</a>
+
+    {% url 'exam:results' as url_results %}
+    <a href="{{ url_results }}" class="{% if request.resolver_match.url_name == 'results' %}activo{% endif %}">Resultados</a>
+
+    {% url 'exam:home_results' as url_home_results %}
+    <a href="{{ url_home_results }}" class="{% if request.resolver_match.url_name == 'home_results' %}activo{% endif %}">Resultados por etapa</a>
+
+    {% url 'exam:loadcsv' as url_loadcsv %}
+    <a href="{{ url_loadcsv }}" class="{% if request.resolver_match.url_name == 'loadcsv' %}activo{% endif %}">Cargar Aspirantes</a>
+</nav>
+
+        </aside>
+
+       
+        <main class="main-content">
+           
+            <header class="topbar">
+      <form action="{% url 'home:logout' %}" method="post" class="logout-form">
+                    {% csrf_token %}
+                     <button type="submit" class="cerrar-sesion-btn">Cerrar sesión</button>
+                </form>
+
+            </header>
+
+            
+            <div class="contenido">
+                {% block content %}
+                {% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>
