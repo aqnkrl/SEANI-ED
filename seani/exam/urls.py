@@ -1,4 +1,5 @@
 from django.urls import path
+from django.contrib.auth.views import LogoutView
 
 from . import views
 
@@ -22,5 +23,9 @@ urlpatterns = [
     path('admin/exam/loadcsv/', views.load_csv, name="loadcsv"),
     path('admin/exam/results/', views.get_scores_with_modules, name="results"),
     #path('results/', views.get_scores_with_modules, name="results"),
-    path('admin/exam/results/stage/', views.home_results, name='home_results'),  # <-- Ruta nueva    
+    path('admin/exam/results/stage/', views.home_results, name='home_results'),  # <-- Ruta nueva   
+
+    path('logout/', LogoutView.as_view(), name='logout'),
+ 
+
 ]
