@@ -6,25 +6,36 @@
 {% block content %}
     <h1 class="bienvenida">Resultados por etapa</h1>
 
-<div class="formulario-center">
-    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
-        <div style="flex: 1;">
-            {{ form.stage.label_tag }}
-            {{ form.stage }}
-        </div>
-        <div style="flex: 1;">
-            {{ form.career.label_tag }}
-            {{ form.career }}
-        </div>
-        <div>
-            <button type="submit" class="guardar">Buscar</button>
-        </div>
+    <div class="formulario-center">
+        <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1;">
+                {{ form.stage.label_tag }}
+                {{ form.stage }}
+            </div>
+            <div style="flex: 1;">
+                {{ form.career.label_tag }}
+                {{ form.career }}
+            </div>
+            <div>
+                <button type="submit" class="guardar">Buscar</button>
+            </div>
+        </form>
+    </div>
+
+    {% if exams %}
+        <h3>Resultados de la etapa {{ form.cleaned_data.stage }}</h3>
+
+<div class="acciones-doble alineado-izquierda">
+    <form method="get" action="{% url 'exam:export_filtered_results_excel' %}">
+        <input type="hidden" name="stage" value="{{ form.cleaned_data.stage.id }}">
+        {% if form.cleaned_data.career %}
+            <input type="hidden" name="career" value="{{ form.cleaned_data.career.id }}">
+        {% endif %}
+        <button type="submit" class="guardar">Exportar a Excel</button>
     </form>
 </div>
 
 
-    {% if exams %}
-        <h3>Resultados de la etapa {{ form.cleaned_data.stage }}</h3>
 
         <div class="table-wrapper">
             <table class="results-table">
@@ -46,11 +57,11 @@
                         <td>{{ exam.full_name }}</td>
                         <td>{{ exam.user.email }}</td>
                         <td>{{ exam.career.name }}</td>
-                        <td>{{ exam.exammodule_set.all.0.score|floatformat:2 }}</td>
-                        <td>{{ exam.exammodule_set.all.1.score|floatformat:2 }}</td>
-                        <td>{{ exam.exammodule_set.all.2.score|floatformat:2 }}</td>
-                        <td>{{ exam.exammodule_set.all.3.score|floatformat:2 }}</td>
-                        <td>{{ exam.score|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.0.score|default_if_none:"0"|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.1.score|default_if_none:"0"|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.2.score|default_if_none:"0"|floatformat:2 }}</td>
+                        <td>{{ exam.exammodule_set.all.3.score|default_if_none:"0"|floatformat:2 }}</td>
+                        <td>{{ exam.score|default_if_none:"0"|floatformat:2 }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

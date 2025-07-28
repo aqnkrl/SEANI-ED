@@ -1,5 +1,4 @@
 from django import forms
-
 from career.models import Career
 from .models import Stage
 
@@ -15,7 +14,7 @@ class CandidateForm(forms.Form):
 class LoadCSVForm(forms.Form):
     file = forms.FileField()
     stage = forms.ModelChoiceField(queryset=Stage.objects.all())
-    
+
 class StageForm(forms.Form):
     stage = forms.ModelChoiceField(
         queryset=Stage.objects.all(),
@@ -28,3 +27,26 @@ class StageForm(forms.Form):
         label="Filtrar por carrera",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
+
+# FORMULARIO PARA AGREGAR ETAPA
+class AddStageForm(forms.ModelForm):
+    class Meta:
+        model = Stage
+        fields = ['stage', 'application_date']
+        widgets = {
+            'stage': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1,  
+                'step': 1,
+                'placeholder': 'Número de etapa'
+            }),
+            'application_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'placeholder': 'Fecha de aplicación'
+            }),
+        }
+        labels = {
+            'stage': 'Número de Etapa',
+            'application_date': 'Fecha de Aplicación',
+        }

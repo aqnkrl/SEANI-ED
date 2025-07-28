@@ -1,14 +1,114 @@
-
 {% extends 'base_admin.html' %}
 
 {% block title %}Inicio{% endblock %}
 
 {% block content %}
-    <h1 class="bienvenida">Bienvenido Administrador</h1>
-    <div class="graf-container">
-        <div class="graf-box azul">Comprensión lectora</div>
-        <div class="graf-box amarillo">Estructura de la lengua</div>
-        <div class="graf-box rojo">Pensamiento matemático</div>
-        <div class="graf-box morado">Pensamiento analítico</div>
+<h1 class="bienvenida">Bienvenido Administrador</h1>
+
+<!-- Contenedor principal para la gráfica general -->
+<div style="max-width: 900px; margin-bottom: 3rem;">
+    <h2>Promedio de Calificaciones por Etapa y Año</h2>
+    <canvas id="chartGeneral" height="120"></canvas>
+</div>
+
+<!-- Contenedor para las gráficas por módulo -->
+<div class="graf-container" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+    <div class="graf-box azul" style="flex: 1 1 200px; cursor: pointer;" data-module-id="1" title="Ver detalles de Comprensión lectora">
+        <h3>Comprensión lectora</h3>
+        <canvas id="chartModulo1"></canvas>
     </div>
+    <div class="graf-box amarillo" style="flex: 1 1 200px; cursor: pointer;" data-module-id="2" title="Ver detalles de Estructura de la lengua">
+        <h3>Estructura de la lengua</h3>
+        <canvas id="chartModulo2"></canvas>
+    </div>
+    <div class="graf-box rojo" style="flex: 1 1 200px; cursor: pointer;" data-module-id="3" title="Ver detalles de Pensamiento matemático">
+        <h3>Pensamiento matemático</h3>
+        <canvas id="chartModulo3"></canvas>
+    </div>
+    <div class="graf-box morado" style="flex: 1 1 200px; cursor: pointer;" data-module-id="4" title="Ver detalles de Pensamiento analítico">
+        <h3>Pensamiento analítico</h3>
+        <canvas id="chartModulo4"></canvas>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Datos para gráfica general
+  const labels = JSON.parse('{{ chart_labels|escapejs }}');
+  const chartData = JSON.parse('{{ chart_data|escapejs }}');
+
+  const datasetsGeneral = Object.keys(chartData).map((year, idx) => {
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0'];
+    return {
+      label: year,
+      data: chartData[year],
+      backgroundColor: colors[idx % colors.length]
+    };
+  });
+
+  const configGeneral = {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: datasetsGeneral
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Promedio de Calificaciones por Etapa y Año' },
+        tooltip: { mode: 'index', intersect: false },
+      },
+      scales: {
+        y: { beginAtZero: true, max: 10 },
+        x: { title: { display: true, text: 'Etapa' } }
+      }
+    },
+  };
+
+  new Chart(document.getElementById('chartGeneral'), configGeneral);
+
+  // Gráficas por módulo
+  const modulesScores = {
+    1: JSON.parse('{{ mod1_scores|default:"[]"|escapejs }}'),
+    2: JSON.parse('{{ mod2_scores|default:"[]"|escapejs }}'),
+    3: JSON.parse('{{ mod3_scores|default:"[]"|escapejs }}'),
+    4: JSON.parse('{{ mod4_scores|default:"[]"|escapejs }}'),
+  };
+
+  const colorsModules = ['#1E88E5', '#FDD835', '#D32F2F', '#7B1FA2'];
+
+  Object.entries(modulesScores).forEach(([modId, scores], i) => {
+    new Chart(document.getElementById('chartModulo' + modId), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Promedio por Etapa',
+          data: scores,
+          backgroundColor: colorsModules[i]
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: `Módulo ${modId} - Promedio por Etapa` },
+          tooltip: { mode: 'index', intersect: false },
+        },
+        scales: {
+          y: { beginAtZero: true, max: 10 },
+          x: { title: { display: true, text: 'Etapa' } }
+        }
+      }
+    });
+  });
+
+  // Hacer que las cajas de módulo sean clickeables para ir a detalle con filtro
+  document.querySelectorAll('.graf-box').forEach(box => {
+    box.addEventListener('click', () => {
+      const moduleId = box.getAttribute('data-module-id');
+      // Redirigir a la vista detalle pasando module_id como query param
+      window.location.href = `{% url 'exam:detalle_por_modulo' %}?module_id=${moduleId}`;
+    });
+  });
+</script>
 {% endblock %}
