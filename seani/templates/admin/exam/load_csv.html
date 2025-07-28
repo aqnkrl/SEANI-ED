@@ -22,10 +22,11 @@
     {% endif %}
 
     <div class="formulario-center">
-    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <input type="submit" value="Aceptar" class="guardar" />
-    </form>
+  <form method="post" enctype="multipart/form-data" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Aceptar" class="guardar" />
+</form>
+
 </div>
 {% endblock %}
