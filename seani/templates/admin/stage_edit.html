@@ -1,0 +1,27 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Editar Etapa{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Editar Etapa</h1>
+
+<form method="post" class="formulario-etapa">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="campo-form">
+        <label for="id_stage">Número de Etapa:</label>
+        {{ form.stage }}
+        {{ form.stage.errors }}
+    </div>
+
+    <div class="campo-form">
+        <label for="id_application_date">Fecha de Aplicación:</label>
+        {{ form.application_date }}
+        {{ form.application_date.errors }}
+    </div>
+
+    <button type="submit" class="btn-guardar">Guardar Cambios</button>
+    <a href="{% url 'exam:stage_list' %}" class="cancelar">Cancelar</a>
+</form>
+{% endblock %}

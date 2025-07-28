@@ -1,0 +1,39 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Lista de Etapas{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Lista de Etapas</h1>
+
+<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+  <a href="{% url 'exam:stage_add' %}" class="btn-agregar">Agregar nueva etapa</a>
+</div>
+
+<div class="table-wrapper">
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Número de Etapa</th>
+        <th>Fecha de Aplicación</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for stage in stages %}
+      <tr>
+        <td>{{ stage.stage }}</td>
+        <td>{{ stage.application_date|date:"d/m/Y" }}</td>
+        <td>
+          <a href="{% url 'exam:stage_edit' stage.pk %}" class="editar">Editar</a>
+          <a href="{% url 'exam:stage_delete' stage.pk %}" class="eliminar">Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" style="text-align:center; color:#777;">No hay etapas registradas.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Pantallas de Inicio{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Configuración de Pantallas de Inicio</h1>
+
+<div class="table-wrapper">
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Pantalla</th>
+        <th>Estado</th>
+        <th>Fecha</th>
+        <th>Hora</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for screen in screens %}
+      <tr>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="screen_id" value="{{ screen.id }}">
+
+          <td>{{ screen.get_screen_name_display }}</td>
+          <td>{% if screen.is_active %}✔ Activa{% else %}𝙓 Inactiva{% endif %}</td>
+
+          {% if screen.screen_name == 'home2' %}
+            <td>
+              <input type="date" name="display_date" value="{{ screen.display_date|date:'Y-m-d' }}" class="input-fecha">
+            </td>
+            <td>
+              <input type="time" name="display_time" value="{{ screen.display_time|time:'H:i' }}" class="input-hora">
+            </td>
+            <td>
+              <button type="submit" name="action" value="activate" class="btn-agregar">Activar</button>
+            </td>
+          {% else %}
+            <td>-</td>
+            <td>-</td>
+            <td>
+              <button type="submit" name="action" value="activate" class="btn-agregar">Activar</button>
+            </td>
+          {% endif %}
+        </form>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="5" style="text-align:center; color:#777;">No hay pantallas configuradas.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
