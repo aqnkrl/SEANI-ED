@@ -3,6 +3,8 @@ from django.contrib.auth.views import LogoutView
 
 from . import views
 
+
+
 app_name = 'exam'
 
 urlpatterns = [
@@ -35,8 +37,8 @@ urlpatterns = [
     path('admin/exam/export/filtered/', views.export_filtered_results_excel, name="export_filtered_results_excel"),
 
     # Panel de administrador con gráficas generales
-    #path('admin-home/', views.admin_home, name='admin_home'),
-    #path('admin-home/modulo-detalle/', views.detalle_por_modulo, name='detalle_por_modulo'),
+   # path('admin-home/', views.admin_home, name='admin_home'),
+    path('admin-home/modulo-detalle/', views.detalle_por_modulo, name='detalle_por_modulo'),
 
 
     # Cierre de sesión
