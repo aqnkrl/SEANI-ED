@@ -1,87 +1,101 @@
 {% extends 'base_admin.html' %}
+{% load static %}
 
 {% block title %}Detalle por Módulo{% endblock %}
 
 {% block content %}
-<h1 class="bienvenida">Detalle del Módulo {{ module_name }}</h1>
+    <h1 class="bienvenida">Detalles del Módulo {{ module_name }}</h1>
 
-<form method="get" class="filtros-form" style="margin-bottom: 1.5rem;">
-    <label for="year">Año:</label>
-    <select name="year" id="year">
-        <option value="">Todos</option>
-        {% for y in years %}
-            <option value="{{ y }}" {% if y|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
-    </select>
+    <div class="formulario-center">
+        <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+            <div style="flex: 1;">
+                <label for="year">Año:</label>
+                <select name="year" id="year" class="campo-input">
+                    <option value="">Todos</option>
+                    {% for y in years %}
+                        <option value="{{ y.year }}" {% if y.year|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y.year }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <label for="stage">Etapa:</label>
-    <select name="stage" id="stage">
-        <option value="">Todas</option>
-        {% for stg in stages %}
-            <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
-        {% endfor %}
-    </select>
+            <div style="flex: 1;">
+                <label for="stage">Etapa:</label>
+                <select name="stage" id="stage" class="campo-input">
+                    <option value="">Todas</option>
+                    {% for stg in stages %}
+                        <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <label for="career">Carrera:</label>
-    <select name="career" id="career">
-        <option value="">Todas</option>
-        {% for c in careers %}
-            <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-        {% endfor %}
-    </select>
+            <div style="flex: 1;">
+                <label for="career">Carrera:</label>
+                <select name="career" id="career" class="campo-input">
+                    <option value="">Todas</option>
+                    {% for c in careers %}
+                        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
 
-    <input type="hidden" name="module_id" value="{{ selected_module }}">
-    <button type="submit">Filtrar</button>
-</form>
+            <input type="hidden" name="module_id" value="{{ selected_module }}">
+            <div>
+                <button type="submit" class="guardar">Filtrar</button>
+            </div>
+        </form>
+    </div>
 
-<div style="max-width: 900px;">
-    <canvas id="chartDetalle" height="150"></canvas>
-</div>
+    <div class="table-wrapper" style="margin-top: 2rem;">
+        <canvas id="chartDetalle" height="150"></canvas>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  const labels = JSON.parse('{{ chart_labels|escapejs }}');
-  const chartData = JSON.parse('{{ chart_data|escapejs }}');
+    {{ chart_labels|json_script:"labels-json" }}
+    {{ chart_data|json_script:"chartdata-json" }}
 
-  // Construir arreglo de promedios para las etiquetas (etapas)
-  // chartData tiene estructura: { year1: [prom1, prom2, ...], year2: [...] }
-  // Vamos a promediar todos los años para cada etapa, o mostrar por año según filtro
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+      const labels = JSON.parse(document.getElementById('labels-json').textContent);
+      const datasets = JSON.parse(document.getElementById('chartdata-json').textContent);
 
-  // Si se quiere mostrar por años separados:
-  const datasets = Object.keys(chartData).map((year, idx) => {
-    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-    return {
-      label: year,
-      data: chartData[year],
-      backgroundColor: colors[idx % colors.length]
-    };
-  });
-
-  const ctx = document.getElementById('chartDetalle').getContext('2d');
-  const detalleChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: datasets
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: 'Detalle de Calificaciones - {{ module_name }}'
+      const ctx = document.getElementById('chartDetalle').getContext('2d');
+      const detalleChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: datasets
         },
-        tooltip: {
-          mode: 'index',
-          intersect: false
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Detalle de Calificaciones - {{ module_name }}'
+            },
+            tooltip: {
+              mode: 'index',
+              intersect: false
+            },
+            legend: {
+              position: 'bottom'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 10,
+              title: {
+                display: true,
+                text: 'Promedio'
+              }
+            },
+            x: {
+              title: {
+                display: true,
+                text: 'Etapa'
+              }
+            }
+          }
         }
-      },
-      scales: {
-        y: { beginAtZero: true, max: 10 },
-        x: { title: { display: true, text: 'Etapa' } }
-      }
-    }
-  });
-</script>
-
+      });
+    </script>
 {% endblock %}
