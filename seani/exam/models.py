@@ -5,9 +5,7 @@ from career.models import Career
 from library.models import Module, Question
 
 # ---------------------
-#Recien agregado
-from django.db import models
-
+# Recientemente agregado
 class HomeScreenSetting(models.Model):
     SCREEN_CHOICES = [
         ('home', 'Pantalla de examen'),
@@ -17,13 +15,11 @@ class HomeScreenSetting(models.Model):
 
     screen_name = models.CharField(max_length=10, choices=SCREEN_CHOICES, unique=True)
     is_active = models.BooleanField(default=False)
-
     display_date = models.DateField(
         null=True,
         blank=True,
         verbose_name="Fecha del examen"
     )
-
     display_time = models.TimeField(
         null=True,
         blank=True,
@@ -31,13 +27,14 @@ class HomeScreenSetting(models.Model):
     )
 
     def __str__(self):
-        return f"{self.get_screen_name_display()} {'(activa)' if self.is_active else '(inactiva)'}"
+        status = "(activa)" if self.is_active else "(inactiva)"
+        return f"{self.get_screen_name_display()} {status}"
 
 
 # ---------------------
 
-
 class Stage(models.Model):
+    # Se mantiene 'stage' como nombre del campo si ya está en uso
     stage = models.IntegerField(verbose_name="Etapa")
     application_date = models.DateField(verbose_name="Fecha de Aplicación")
 
@@ -57,6 +54,7 @@ class Stage(models.Model):
     class Meta:
         verbose_name = "etapa"
         verbose_name_plural = "etapas"
+        ordering = ['stage']  # Opcional, ordenar por número de etapa
 
 
 class Exam(models.Model):

@@ -16,7 +16,7 @@
                 <div class="avatar">👤</div>
                 <div class="name">{{ user.get_full_name|default:user.username }}<br><span>Administrador</span></div>
             </div>
-  <nav class="menu">
+<nav class="menu">
     <p class="modulo">Módulos</p>
 
     {% url 'home:admin' as url_admin %}
@@ -27,15 +27,23 @@
     {% url 'exam:create' as create_url %}
     <a href="{{ create_url }}" class="{% if request.resolver_match.url_name == 'create' %}activo{% endif %}">Registrar Aspirante</a>
 
-    {% url 'exam:results' as url_results %}
-    <a href="{{ url_results }}" class="{% if request.resolver_match.url_name == 'results' %}activo{% endif %}">Resultados</a>
-
     {% url 'exam:home_results' as url_home_results %}
     <a href="{{ url_home_results }}" class="{% if request.resolver_match.url_name == 'home_results' %}activo{% endif %}">Resultados por etapa</a>
 
     {% url 'exam:loadcsv' as url_loadcsv %}
     <a href="{{ url_loadcsv }}" class="{% if request.resolver_match.url_name == 'loadcsv' %}activo{% endif %}">Cargar Aspirantes</a>
+
+  {% url 'exam:stage_list' as url_stage_list %}
+<a href="{{ url_stage_list }}" class="{% if request.resolver_match.url_name == 'stage_list' %}activo{% endif %}">Etapas Registradas</a>
+
+{% url 'exam:home_screen_table' as url_home_screen %}
+<a href="{{ url_home_screen }}" class="{% if request.resolver_match.url_name == 'home_screen_table' %}activo{% endif %}">Pantallas de Inicio</a>
+
+
+
+
 </nav>
+
 
         </aside>
 

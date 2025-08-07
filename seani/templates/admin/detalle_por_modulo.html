@@ -1,0 +1,87 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Detalle por Módulo{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Detalle del Módulo {{ module_name }}</h1>
+
+<form method="get" class="filtros-form" style="margin-bottom: 1.5rem;">
+    <label for="year">Año:</label>
+    <select name="year" id="year">
+        <option value="">Todos</option>
+        {% for y in years %}
+            <option value="{{ y }}" {% if y|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="stage">Etapa:</label>
+    <select name="stage" id="stage">
+        <option value="">Todas</option>
+        {% for stg in stages %}
+            <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
+        {% endfor %}
+    </select>
+
+    <label for="career">Carrera:</label>
+    <select name="career" id="career">
+        <option value="">Todas</option>
+        {% for c in careers %}
+            <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+        {% endfor %}
+    </select>
+
+    <input type="hidden" name="module_id" value="{{ selected_module }}">
+    <button type="submit">Filtrar</button>
+</form>
+
+<div style="max-width: 900px;">
+    <canvas id="chartDetalle" height="150"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const labels = JSON.parse('{{ chart_labels|escapejs }}');
+  const chartData = JSON.parse('{{ chart_data|escapejs }}');
+
+  // Construir arreglo de promedios para las etiquetas (etapas)
+  // chartData tiene estructura: { year1: [prom1, prom2, ...], year2: [...] }
+  // Vamos a promediar todos los años para cada etapa, o mostrar por año según filtro
+
+  // Si se quiere mostrar por años separados:
+  const datasets = Object.keys(chartData).map((year, idx) => {
+    const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+    return {
+      label: year,
+      data: chartData[year],
+      backgroundColor: colors[idx % colors.length]
+    };
+  });
+
+  const ctx = document.getElementById('chartDetalle').getContext('2d');
+  const detalleChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: 'Detalle de Calificaciones - {{ module_name }}'
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, max: 10 },
+        x: { title: { display: true, text: 'Etapa' } }
+      }
+    }
+  });
+</script>
+
+{% endblock %}

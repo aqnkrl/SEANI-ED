@@ -1,21 +1,22 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponse
-
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-
-from .models import Exam, Stage
-from career.models import Career
-
-from .forms import CandidateForm, LoadCSVForm, StageForm
-
+import openpyxl
+from django.views.decorators.csrf import csrf_protect
 import csv
 import io
+import json
 
+from django.db.models import Avg
+from collections import defaultdict
+from .models import Exam, Stage, HomeScreenSetting
+from career.models import Career
+from .forms import CandidateForm, LoadCSVForm, StageForm, AddStageForm
 
-# ------------------------
-from .models import HomeScreenSetting
+# ----------------------------------------------------
+# Vistas del aspirante
 
 @login_required
 def home(request):
@@ -34,26 +35,6 @@ def home(request):
     modules = exam.exammodule_set.all()
     return render(request, 'exam/home.html', {'modules': modules})
 
-#-------------------------
-
-### Views for Aspirantes
-# @login_required
-# def home(request):
-#      if request.user.is_superuser:
-#          return redirect('admin:index')
-#      exam = request.user.exam
-#      modules = exam.exammodule_set.all()
-#      # return home2(request)  # Mostrar pantalla antes al examen
-#      # return home3(request)  # Mostrar pantalla despues al examen
-#      return render(request, 'exam/home.html', {'modules': modules})
-
-
-# @login_required
-# def home2(request):
-#     if request.user.is_superuser:
-#         return redirect('admin:index')
-#     return render(request, 'exam/home2.html')
-
 @login_required
 def home2(request):
     if request.user.is_superuser:
@@ -62,13 +43,11 @@ def home2(request):
     settings = HomeScreenSetting.objects.filter(screen_name='home2').first()
     return render(request, 'exam/home2.html', {'settings': settings})
 
-
 @login_required
 def home3(request):
     if request.user.is_superuser:
         return redirect('admin:index')
     return render(request, 'exam/home3.html')
-# --------------------------------------------------
 
 @login_required
 def question(request, module_id, question_id=1):
@@ -77,12 +56,13 @@ def question(request, module_id, question_id=1):
 
     if modules.count() == 0 or question_id <= 0:
         return redirect('exam:home')
-    if exam.exammodule_set.get(module_id=module_id).active == False:
+    if not exam.exammodule_set.get(module_id=module_id).active:
         return redirect('exam:home')
+
+    questions = exam.breakdown_set.filter(question__module_id=module_id)
 
     if request.method == 'GET':
         try:
-            questions = exam.breakdown_set.filter(question__module_id=module_id)
             question_breakdown = questions[question_id - 1]
             question = question_breakdown.question
             answer = question_breakdown.answer
@@ -97,8 +77,7 @@ def question(request, module_id, question_id=1):
             exam.compute_score()
             return redirect('exam:home')
 
-    if request.method == 'POST':
-        questions = exam.breakdown_set.filter(question__module_id=module_id)
+    elif request.method == 'POST':
         question_breakdown = questions[question_id - 1]
         answer = request.POST['answer']
         if question_breakdown.answer != answer:
@@ -111,7 +90,6 @@ def save_module(request, module_id):
     if request.method == 'POST':
         exam = request.user.exam
         exam.compute_score_by_module(module_id)
-        return redirect('exam:home')
     return redirect('exam:home')
 
 @login_required
@@ -119,14 +97,14 @@ def save_exam(request):
     if request.method == 'POST':
         exam = request.user.exam
         exam.compute_score()
-        return redirect('exam:home')
     return redirect('exam:home')
 
-#### Views for Admin
+# ----------------------------------------------------
+# Vistas del administrador
+
 def create(request):
     if request.method == 'POST':
         form = CandidateForm(request.POST)
-    
         if form.is_valid():
             first_name = form.cleaned_data['first_name']
             last_name = form.cleaned_data['last_name']
@@ -135,35 +113,36 @@ def create(request):
             password = form.cleaned_data['password']
             stage = form.cleaned_data['stage']
             career = form.cleaned_data['career']
-            
-            user = User.objects.create_user(
-                    username = username, 
-                    password = password, 
-                    email = email)
-            user.first_name = first_name
-            user.last_name = last_name
-            user.save()
 
-            exam = Exam.objects.create(user = user, stage = stage, career = career)
+            user = User.objects.create_user(
+                username=username,
+                password=password,
+                email=email,
+                first_name=first_name,
+                last_name=last_name
+            )
+
+            exam = Exam.objects.create(user=user, stage=stage, career=career)
             exam.set_modules()
             exam.set_questions()
-            form = CandidateForm()
-            return render(request, 'admin/exam/create.html', {'message': "Aspirante Registrado!", "form": form})
-    
-    form = CandidateForm()
-    return render(request, 'admin/exam/create.html', { "form": form })
+
+            return render(request, 'admin/exam/create.html', {
+                'message': "Aspirante Registrado!",
+                'form': CandidateForm()
+            })
+
+    return render(request, 'admin/exam/create.html', { "form": CandidateForm() })
 
 def load_csv(request):
     if request.method == 'POST':
         form = LoadCSVForm(request.POST, request.FILES)
-
         if form.is_valid():
             file_csv = form.cleaned_data['file']
             stage = form.cleaned_data['stage']
 
             decoded = file_csv.read().decode('utf-8-sig')
             reader = csv.reader(io.StringIO(decoded))
-            next(reader, None)  # Saltar encabezado
+            next(reader, None)
 
             duplicados = []
             registrados = 0
@@ -178,7 +157,6 @@ def load_csv(request):
                 password = row[3].strip()
                 career_short = row[4].strip().upper()
 
-                # Obtener o crear la carrera por short_name
                 career, _ = Career.objects.get_or_create(
                     short_name=career_short,
                     defaults={"name": career_short.title()}
@@ -196,7 +174,6 @@ def load_csv(request):
                     exam = Exam.objects.create(user=user, career=career, stage=stage)
                     exam.set_modules()
                     exam.set_questions()
-
                     registrados += 1
                 else:
                     duplicados.append(email)
@@ -207,11 +184,10 @@ def load_csv(request):
 
             return render(request, 'admin/exam/load_csv.html', {
                 'message': mensaje,
-                'duplicados': duplicados,
+                'duplicados': duplicados
             })
 
-    form = LoadCSVForm()
-    return render(request, 'admin/exam/load_csv.html', {"form": form})
+    return render(request, 'admin/exam/load_csv.html', { "form": LoadCSVForm() })
 
 @login_required
 def get_scores_with_modules(request):
@@ -231,10 +207,7 @@ def get_scores_with_modules(request):
                 'final': round(e.score, 2)
             })
         return render(request, 'home/results.html', { 'results': results })
-    else:
-        return redirect('home')
-
-# views.py
+    return redirect('home')
 
 @login_required
 def home_results(request):
@@ -258,3 +231,308 @@ def home_results(request):
         'form': form,
         'exams': exams
     })
+
+@login_required
+def export_filtered_results_excel(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    form = StageForm(request.GET or None)
+    if form.is_valid():
+        selected_stage = form.cleaned_data['stage']
+        selected_career = form.cleaned_data.get('career')
+
+        exams = Exam.objects.filter(stage=selected_stage)
+        if selected_career:
+            exams = exams.filter(career=selected_career)
+
+        exams = exams.select_related('user', 'career')
+
+        workbook = openpyxl.Workbook()
+        sheet = workbook.active
+        sheet.title = "Resultados Filtrados"
+
+        sheet.append([
+            "Nombre completo", "Correo", "Carrera",
+            "Comprensión Lectora", "Estructura de la Lengua",
+            "Pensamiento Matemático", "Pensamiento Analítico", "Promedio"
+        ])
+
+        for exam in exams:
+            modules = exam.exammodule_set.all()
+            if modules.count() < 4:
+                continue
+
+            sheet.append([
+                exam.full_name(),
+                exam.user.email,
+                exam.career.name,
+                round(modules[0].score, 2),
+                round(modules[1].score, 2),
+                round(modules[2].score, 2),
+                round(modules[3].score, 2),
+                round(exam.score, 2),
+            ])
+
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=resultados_filtrados.xlsx'
+        workbook.save(response)
+        return response
+
+    return HttpResponse("Parámetros inválidos para exportar.", status=400)
+
+@login_required
+def export_scores_excel(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    workbook = openpyxl.Workbook()
+    sheet = workbook.active
+    sheet.title = "Resultados por Módulo"
+
+    sheet.append([
+        "Nombre completo", "Correo", "Carrera",
+        "Módulo 1", "Módulo 2", "Módulo 3", "Módulo 4", "Puntaje Final"
+    ])
+
+    exams = Exam.objects.filter(stage_id=4).select_related('user', 'career')
+    for exam in exams:
+        modules = exam.exammodule_set.all()
+        if modules.count() < 4:
+            continue
+
+        sheet.append([
+            exam.full_name(),
+            exam.user.email,
+            exam.career.name,
+            round(modules[0].score, 2),
+            round(modules[1].score, 2),
+            round(modules[2].score, 2),
+            round(modules[3].score, 2),
+            round(exam.score, 2),
+        ])
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename=resultados_modulos.xlsx'
+    workbook.save(response)
+    return response
+
+# ----------------------------------------------------
+# CRUD de Etapas 
+
+@login_required
+def stage_add(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = AddStageForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('exam:stage_list')
+    else:
+        form = AddStageForm()
+
+    return render(request, 'admin/stage_add.html', { 'form': form })
+
+@login_required
+def stage_list(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+    stages = Stage.objects.all().order_by('stage')
+    return render(request, 'admin/stage_list.html', { 'stages': stages })
+
+@login_required
+def stage_edit(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    stage = get_object_or_404(Stage, pk=pk)
+    if request.method == 'POST':
+        form = AddStageForm(request.POST, instance=stage)
+        if form.is_valid():
+            form.save()
+            return redirect('exam:stage_list')
+    else:
+        form = AddStageForm(instance=stage)
+    return render(request, 'admin/stage_add.html', { 'form': form, 'edit': True })
+
+@login_required
+def stage_delete(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    stage = get_object_or_404(Stage, pk=pk)
+    if request.method == 'POST':
+        stage.delete()
+        return redirect('exam:stage_list')
+    return render(request, 'admin/stage_confirm_delete.html', {'stage': stage})
+ 
+# ------------------------------------------------------------------------------------
+# HomeScreenSetting
+@csrf_protect
+def home_screen_table(request):
+    screens = HomeScreenSetting.objects.all().order_by('screen_name')
+
+    if request.method == 'POST':
+        screen_id = request.POST.get('screen_id')
+        action = request.POST.get('action')
+
+        screen = get_object_or_404(HomeScreenSetting, id=screen_id)
+
+        if action == 'activate':
+            # Desactivar todas
+            HomeScreenSetting.objects.update(is_active=False)
+            screen.is_active = True
+
+            if screen.screen_name == 'home2':
+                # Guardar fecha y hora si vienen en el POST
+                screen.display_date = request.POST.get('display_date') or None
+                screen.display_time = request.POST.get('display_time') or None
+
+            screen.save()
+
+        return redirect('exam:home_screen_table')
+
+    return render(request, 'admin/home_screen_table.html', {'screens': screens})
+
+# ------------------------------------------------------------------------------------
+# ESTO TODAVIA NO ESTÁ IMPLEMENTADO(NO FUNCIONA)
+"""
+@login_required
+def admin_home(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exams = Exam.objects.select_related('stage')
+
+    grouped_general = defaultdict(list)    # (year, stage) -> [scores]
+    grouped_modules = {i: defaultdict(list) for i in range(1,5)}  # módulos 1 a 4
+
+    for exam in exams:
+        if exam.stage and exam.stage.application_date:
+            year = exam.stage.application_date.year
+        else:
+            continue
+        stage_num = exam.stage.stage
+        grouped_general[(year, stage_num)].append(exam.score)
+
+        modules = exam.exammodule_set.all()
+        for mod in modules:
+            if mod.module.id in range(1,5):
+                grouped_modules[mod.module.id][(year, stage_num)].append(mod.score)
+
+    all_stages = sorted({stage for (_, stage) in grouped_general})
+    all_years = sorted({year for (year, _) in grouped_general})
+
+    chart_data = {}
+    for year in all_years:
+        chart_data[year] = []
+        for stage in all_stages:
+            scores = grouped_general.get((year, stage), [])
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            chart_data[year].append(avg)
+
+    def avg_scores_for_module(mod_id):
+        result = []
+        for stage in all_stages:
+            scores = []
+            for year in all_years:
+                scores += grouped_modules[mod_id].get((year, stage), [])
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            result.append(avg)
+        return result
+
+    context = {
+        'chart_labels': json.dumps([f"Etapa {s}" for s in all_stages]),
+        'chart_data': json.dumps(chart_data),
+        'mod1_scores': json.dumps(avg_scores_for_module(1)),
+        'mod2_scores': json.dumps(avg_scores_for_module(2)),
+        'mod3_scores': json.dumps(avg_scores_for_module(3)),
+        'mod4_scores': json.dumps(avg_scores_for_module(4)),
+    }
+
+    return render(request, 'admin/home.html', context)
+"""
+
+
+# ---------------------------------------------------
+# Vista para detalle por módulo con filtros y gráfica
+
+@login_required
+def detalle_por_modulo(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    form = StageForm(request.GET or None)
+
+    selected_stage = None
+    selected_career = None
+    selected_year = None
+    module_id = request.GET.get('module_id')
+
+    exams = Exam.objects.select_related('stage', 'career').all()
+
+    if form.is_valid():
+        selected_stage = form.cleaned_data['stage']
+        selected_career = form.cleaned_data.get('career')
+        selected_year = form.cleaned_data.get('application_year') if hasattr(form.cleaned_data, 'application_year') else None
+
+        if selected_stage:
+            exams = exams.filter(stage=selected_stage)
+        if selected_career:
+            exams = exams.filter(career=selected_career)
+        if selected_year:
+            exams = exams.filter(stage__application_date__year=selected_year)
+
+    if module_id:
+        try:
+            module_id = int(module_id)
+            if module_id not in [1, 2, 3, 4]:
+                module_id = None
+        except:
+            module_id = None
+
+    grouped = defaultdict(list)
+
+    for exam in exams:
+        if not exam.stage or not exam.stage.application_date:
+            continue
+        year = exam.stage.application_date.year
+        stage_num = exam.stage.stage
+        modules = exam.exammodule_set.all()
+        mod_score = None
+        if module_id:
+            for mod in modules:
+                if mod.module.id == module_id:
+                    mod_score = mod.score
+                    break
+        else:
+            mod_score = exam.score
+
+        if mod_score is not None:
+            grouped[(year, stage_num)].append(mod_score)
+
+    all_stages = sorted({stage for (_, stage) in grouped})
+    all_years = sorted({year for (year, _) in grouped})
+
+    chart_data = {}
+    for year in all_years:
+        chart_data[year] = []
+        for stage in all_stages:
+            scores = grouped.get((year, stage), [])
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            chart_data[year].append(avg)
+
+    context = {
+        'chart_labels': json.dumps([f"Etapa {s}" for s in all_stages]),
+        'chart_data': json.dumps(chart_data),
+        'all_years': all_years,
+        'form': form,
+        'selected_module': module_id,
+    }
+    return render(request, 'admin/detalle_por_modulo.html', context)
