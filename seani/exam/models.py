@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from career.models import Career
 from library.models import Module, Question
 
+from django import forms
+# from .models import Exam, Career, Stage
+
 # ---------------------
 # Recientemente agregado
 class HomeScreenSetting(models.Model):
@@ -34,7 +37,7 @@ class HomeScreenSetting(models.Model):
 # ---------------------
 
 class Stage(models.Model):
-    # Se mantiene 'stage' como nombre del campo si ya está en uso
+
     stage = models.IntegerField(verbose_name="Etapa")
     application_date = models.DateField(verbose_name="Fecha de Aplicación")
 
@@ -54,7 +57,7 @@ class Stage(models.Model):
     class Meta:
         verbose_name = "etapa"
         verbose_name_plural = "etapas"
-        ordering = ['stage']  # Opcional, ordenar por número de etapa
+        ordering = ['stage']  
 
 
 class Exam(models.Model):
@@ -79,14 +82,24 @@ class Exam(models.Model):
             for question in module.question_set.all():
                 Breakdown.objects.create(exam=self, question=question, correct=question.correct)
 
-    def compute_score_by_module(self, module_id):
-        score = 0.0
-        for question in self.breakdown_set.filter(question__module_id=module_id):
-            if question.correct == question.answer:
-                score += 10.0
+def compute_score_by_module(self, module_id):
+    score = 0.0
+    total_questions = self.questions.filter(module_id=module_id).count()
+    if total_questions == 0:
+        # No hay preguntas para ese módulo, evita división por cero
         exam_module = self.exammodule_set.get(module_id=module_id)
-        exam_module.score = score / self.questions.filter(module_id=module_id).count()
+        exam_module.score = 0.0
         exam_module.save()
+        return
+
+    for question in self.breakdown_set.filter(question__module_id=module_id):
+        if question.correct == question.answer:
+            score += 10.0
+    exam_module = self.exammodule_set.get(module_id=module_id)
+    exam_module.score = score / total_questions
+    exam_module.save()
+
+
 
     def compute_score(self):
         score = 0.0
@@ -139,3 +152,5 @@ class LoadCSV(models.Model):
         verbose_name = 'Cargar Aspirante'
         verbose_name_plural = 'Cargar Aspirantes'
         app_label = 'exam'
+
+

@@ -21,6 +21,14 @@ urlpatterns = [
     path('admin/exam/results/', views.get_scores_with_modules, name="results"),
     path('admin/exam/results/stage/', views.home_results, name='home_results'),
 
+    # Vistas para aspirantes
+    path('aspirantes/', views.aspirante_list, name='aspirante_list'),
+    path('aspirantes/add/', views.aspirante_add, name='aspirante_add'),
+    path('aspirantes/edit/<int:pk>/', views.aspirante_edit, name='aspirante_edit'),
+    path('aspirantes/delete/<int:pk>/', views.aspirante_delete, name='aspirante_delete'),
+    # exam/urls.py
+    path('admin-home/', views.admin_home, name='admin_home'),
+
     # Vista para agregar etapa
     path('etapas/', views.stage_list, name='stage_list'),
     path('etapas/editar/<int:pk>/', views.stage_edit, name='stage_edit'),
@@ -35,7 +43,11 @@ urlpatterns = [
     path('admin/exam/export/filtered/', views.export_filtered_results_excel, name="export_filtered_results_excel"),
 
     # Panel de administrador con gráficas generales
+
     #path('admin-home/', views.admin_home, name='admin_home'),
+
+   # path('admin-home/', views.admin_home, name='admin_home'),
+
     path('admin-home/modulo-detalle/', views.detalle_por_modulo, name='detalle_por_modulo'),
 
 

@@ -8,12 +8,14 @@ from django.views.decorators.csrf import csrf_protect
 import csv
 import io
 import json
+import random
 
-from django.db.models import Avg
+from django.db.models import Avg, Count
 from collections import defaultdict
-from .models import Exam, Stage, HomeScreenSetting
+from .models import Exam, Stage, HomeScreenSetting,Career, Module
 from career.models import Career
 from .forms import CandidateForm, LoadCSVForm, StageForm, AddStageForm
+
 
 # ----------------------------------------------------
 # Vistas del aspirante
@@ -400,6 +402,7 @@ def home_screen_table(request):
 
     return render(request, 'admin/home_screen_table.html', {'screens': screens})
 
+
 # ------------------------------------------------------------------------------------
 # ESTO TODAVIA NO ESTÁ IMPLEMENTADO(NO FUNCIONA)
 """
@@ -462,48 +465,45 @@ def admin_home(request):
 
 # ---------------------------------------------------
 # Vista para detalle por módulo con filtros y gráfica
+# ------------------------------------------------------------------------------------
+# Detalle por Módulo
 
 @login_required
 def detalle_por_modulo(request):
     if not request.user.is_superuser:
         return redirect('home')
 
-    form = StageForm(request.GET or None)
-
-    selected_stage = None
-    selected_career = None
-    selected_year = None
+    selected_stage = request.GET.get('stage')
+    selected_career = request.GET.get('career')
+    selected_year = request.GET.get('year')
     module_id = request.GET.get('module_id')
 
     exams = Exam.objects.select_related('stage', 'career').all()
 
-    if form.is_valid():
-        selected_stage = form.cleaned_data['stage']
-        selected_career = form.cleaned_data.get('career')
-        selected_year = form.cleaned_data.get('application_year') if hasattr(form.cleaned_data, 'application_year') else None
-
-        if selected_stage:
-            exams = exams.filter(stage=selected_stage)
-        if selected_career:
-            exams = exams.filter(career=selected_career)
-        if selected_year:
-            exams = exams.filter(stage__application_date__year=selected_year)
+    if selected_stage:
+        exams = exams.filter(stage__stage=selected_stage)
+    if selected_career:
+        exams = exams.filter(career__id=selected_career)
+    if selected_year:
+        exams = exams.filter(stage__application_date__year=selected_year)
 
     if module_id:
         try:
             module_id = int(module_id)
             if module_id not in [1, 2, 3, 4]:
                 module_id = None
-        except:
+        except ValueError:
             module_id = None
 
-    grouped = defaultdict(list)
+    # Agrupar por etapa y carrera
+    grouped = defaultdict(lambda: defaultdict(list))
 
     for exam in exams:
-        if not exam.stage or not exam.stage.application_date:
+        if not exam.stage or not exam.stage.application_date or not exam.career:
             continue
-        year = exam.stage.application_date.year
         stage_num = exam.stage.stage
+        year = exam.stage.application_date.year
+        career_name = exam.career.name
         modules = exam.exammodule_set.all()
         mod_score = None
         if module_id:
@@ -515,24 +515,189 @@ def detalle_por_modulo(request):
             mod_score = exam.score
 
         if mod_score is not None:
-            grouped[(year, stage_num)].append(mod_score)
+            label = f"Etapa {stage_num} - {year}"
+            grouped[label][career_name].append(mod_score)
 
-    all_stages = sorted({stage for (_, stage) in grouped})
-    all_years = sorted({year for (year, _) in grouped})
+    all_labels = sorted(grouped.keys())  # Etapa + Año
+    all_careers = sorted({c for label in grouped.values() for c in label.keys()})
 
-    chart_data = {}
-    for year in all_years:
-        chart_data[year] = []
-        for stage in all_stages:
-            scores = grouped.get((year, stage), [])
+    # Paleta de colores vibrantes y únicos
+    vibrant_colors = [
+        '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
+        '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
+        '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000',
+        '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
+    ]
+
+    # Construir datos para Chart.js
+    chart_labels = all_labels
+    chart_data = []
+
+    for career in all_careers:
+        data = []
+        for label in all_labels:
+            scores = grouped[label].get(career, [])
             avg = round(sum(scores) / len(scores), 2) if scores else 0
-            chart_data[year].append(avg)
+            data.append(avg)
+        color_index = all_careers.index(career) % len(vibrant_colors)
+        chart_data.append({
+            'label': career,
+            'data': data,
+            'backgroundColor': vibrant_colors[color_index]
+        })
+
+    # Obtener nombre del módulo
+    if module_id:
+        try:
+            module_obj = Module.objects.get(id=module_id)
+            module_name = module_obj.name
+        except Module.DoesNotExist:
+            module_name = f"Módulo {module_id}"
+    else:
+        module_name = "General"
+
+    # Opciones para los filtros
+    stages = Stage.objects.values_list('stage', flat=True).distinct().order_by('stage')
+    years = Stage.objects.dates('application_date', 'year').distinct()
+    careers = Career.objects.all()
 
     context = {
-        'chart_labels': json.dumps([f"Etapa {s}" for s in all_stages]),
-        'chart_data': json.dumps(chart_data),
-        'all_years': all_years,
-        'form': form,
+        'chart_labels': chart_labels,
+        'chart_data': chart_data,
+        'years': years,
+        'stages': stages,
+        'careers': careers,
+        'selected_year': selected_year,
+        'selected_stage': selected_stage,
+        'selected_career': selected_career,
         'selected_module': module_id,
+        'module_name': module_name,
     }
+
     return render(request, 'admin/detalle_por_modulo.html', context)
+
+
+@login_required
+def debug_exam_data(request):
+    exams = Exam.objects.select_related('stage').prefetch_related('exammodule_set__module').all()[:10]
+    data = []
+    for exam in exams:
+        modules = [{
+            'module_id': em.module.id,
+            'module_name': em.module.name,
+            'score': em.score
+        } for em in exam.exammodule_set.all()]
+        data.append({
+            'exam_id': exam.id,
+            'stage': exam.stage.stage,
+            'stage_date': exam.stage.application_date,
+            'modules': modules
+        })
+    return render(request, 'admin/debug_exam_data.html', {'exams': data})
+
+
+# ----------------------------------------------------
+# CRUD de Aspirantes
+
+@login_required
+def aspirante_list(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').order_by('user__last_name')
+    return render(request, 'admin/aspirante_list.html', { 'aspirantes': aspirantes })
+
+@login_required
+def aspirante_add(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = CandidateForm(request.POST)
+        if form.is_valid():
+            # Guardar nuevo aspirante
+            return redirect('exam:aspirante_add')  
+    else:
+        form = CandidateForm()
+
+    # Obtener aspirantes para la tabla
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').order_by('user__last_name')
+
+    return render(request, 'admin/aspirante_add.html', {
+        'form': form,
+        'aspirantes': aspirantes,
+    })
+
+@login_required
+def aspirante_delete(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exam = get_object_or_404(Exam, pk=pk)
+
+    if request.method == 'POST':
+        exam.user.delete()  
+        return redirect('exam:aspirante_list')
+
+    return render(request, 'admin/aspirante_confirm_delete.html', { 'aspirante': exam })
+
+@login_required
+def aspirante_edit(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exam = get_object_or_404(Exam, pk=pk)
+    user = exam.user
+
+    if request.method == 'POST':
+        form = CandidateForm(request.POST)  
+        if form.is_valid():
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.email = form.cleaned_data['email']
+            user.username = form.cleaned_data['username']
+
+            if form.cleaned_data['password']:
+                user.set_password(form.cleaned_data['password'])
+
+            user.save()
+
+            stage_changed = exam.stage != form.cleaned_data['stage']
+            career_changed = exam.career != form.cleaned_data['career']
+
+            exam.stage = form.cleaned_data['stage']
+            exam.career = form.cleaned_data['career']
+            exam.save()
+
+            if stage_changed or career_changed:
+                exam.set_modules()
+                exam.set_questions()
+
+            return redirect('exam:aspirante_list')
+    else:
+        form = CandidateForm(initial={
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'username': user.username,
+            'stage': exam.stage,
+            'career': exam.career,
+        })
+
+    return render(request, 'admin/aspirante_edit.html', {'form': form, 'edit': True})
+
+@login_required
+def admin_home(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    # Obtener aspirantes (exámenes con usuario relacionado)
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').all().order_by('user__last_name')
+
+    # Obtener módulos para el div graf-container (como ya haces)
+    modulos = Module.objects.all()
+
+    return render(request, 'admin/home.html', {
+        'modulos': modulos,
+        'aspirantes': aspirantes,
+    })

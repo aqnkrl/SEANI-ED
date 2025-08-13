@@ -24,8 +24,8 @@
 
     <a href="{% url 'admin:index' %}" class="{% if request.resolver_match.namespace == 'admin' %}activo{% endif %}">Panel de Django</a>
 
-    {% url 'exam:create' as create_url %}
-    <a href="{{ create_url }}" class="{% if request.resolver_match.url_name == 'create' %}activo{% endif %}">Registrar Aspirante</a>
+    {% url 'exam:aspirante_list' as aspirante_list_url %}
+    <a href="{{ aspirante_list_url }}" class="{% if request.resolver_match.url_name == 'aspirante_list' %}activo{% endif %}">Aspirantes registrados</a>
 
     {% url 'exam:home_results' as url_home_results %}
     <a href="{{ url_home_results }}" class="{% if request.resolver_match.url_name == 'home_results' %}activo{% endif %}">Resultados por etapa</a>
