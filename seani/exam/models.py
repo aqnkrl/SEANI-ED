@@ -4,6 +4,9 @@ from django.contrib.auth.models import User
 from career.models import Career
 from library.models import Module, Question
 
+from django import forms
+# from .models import Exam, Career, Stage
+
 # ---------------------
 # Recientemente agregado
 class HomeScreenSetting(models.Model):
@@ -149,3 +152,5 @@ class LoadCSV(models.Model):
         verbose_name = 'Cargar Aspirante'
         verbose_name_plural = 'Cargar Aspirantes'
         app_label = 'exam'
+
+

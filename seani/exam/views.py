@@ -404,6 +404,67 @@ def home_screen_table(request):
 
 
 # ------------------------------------------------------------------------------------
+# ESTO TODAVIA NO ESTÁ IMPLEMENTADO(NO FUNCIONA)
+"""
+@login_required
+def admin_home(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exams = Exam.objects.select_related('stage')
+
+    grouped_general = defaultdict(list)    # (year, stage) -> [scores]
+    grouped_modules = {i: defaultdict(list) for i in range(1,5)}  # módulos 1 a 4
+
+    for exam in exams:
+        if exam.stage and exam.stage.application_date:
+            year = exam.stage.application_date.year
+        else:
+            continue
+        stage_num = exam.stage.stage
+        grouped_general[(year, stage_num)].append(exam.score)
+
+        modules = exam.exammodule_set.all()
+        for mod in modules:
+            if mod.module.id in range(1,5):
+                grouped_modules[mod.module.id][(year, stage_num)].append(mod.score)
+
+    all_stages = sorted({stage for (_, stage) in grouped_general})
+    all_years = sorted({year for (year, _) in grouped_general})
+
+    chart_data = {}
+    for year in all_years:
+        chart_data[year] = []
+        for stage in all_stages:
+            scores = grouped_general.get((year, stage), [])
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            chart_data[year].append(avg)
+
+    def avg_scores_for_module(mod_id):
+        result = []
+        for stage in all_stages:
+            scores = []
+            for year in all_years:
+                scores += grouped_modules[mod_id].get((year, stage), [])
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            result.append(avg)
+        return result
+
+    context = {
+        'chart_labels': json.dumps([f"Etapa {s}" for s in all_stages]),
+        'chart_data': json.dumps(chart_data),
+        'mod1_scores': json.dumps(avg_scores_for_module(1)),
+        'mod2_scores': json.dumps(avg_scores_for_module(2)),
+        'mod3_scores': json.dumps(avg_scores_for_module(3)),
+        'mod4_scores': json.dumps(avg_scores_for_module(4)),
+    }
+
+    return render(request, 'admin/home.html', context)
+"""
+
+
+# ---------------------------------------------------
+# Vista para detalle por módulo con filtros y gráfica
 # ------------------------------------------------------------------------------------
 # Detalle por Módulo
 
@@ -533,3 +594,110 @@ def debug_exam_data(request):
             'modules': modules
         })
     return render(request, 'admin/debug_exam_data.html', {'exams': data})
+
+
+# ----------------------------------------------------
+# CRUD de Aspirantes
+
+@login_required
+def aspirante_list(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').order_by('user__last_name')
+    return render(request, 'admin/aspirante_list.html', { 'aspirantes': aspirantes })
+
+@login_required
+def aspirante_add(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    if request.method == 'POST':
+        form = CandidateForm(request.POST)
+        if form.is_valid():
+            # Guardar nuevo aspirante
+            return redirect('exam:aspirante_add')  
+    else:
+        form = CandidateForm()
+
+    # Obtener aspirantes para la tabla
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').order_by('user__last_name')
+
+    return render(request, 'admin/aspirante_add.html', {
+        'form': form,
+        'aspirantes': aspirantes,
+    })
+
+@login_required
+def aspirante_delete(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exam = get_object_or_404(Exam, pk=pk)
+
+    if request.method == 'POST':
+        exam.user.delete()  
+        return redirect('exam:aspirante_list')
+
+    return render(request, 'admin/aspirante_confirm_delete.html', { 'aspirante': exam })
+
+@login_required
+def aspirante_edit(request, pk):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    exam = get_object_or_404(Exam, pk=pk)
+    user = exam.user
+
+    if request.method == 'POST':
+        form = CandidateForm(request.POST)  
+        if form.is_valid():
+            user.first_name = form.cleaned_data['first_name']
+            user.last_name = form.cleaned_data['last_name']
+            user.email = form.cleaned_data['email']
+            user.username = form.cleaned_data['username']
+
+            if form.cleaned_data['password']:
+                user.set_password(form.cleaned_data['password'])
+
+            user.save()
+
+            stage_changed = exam.stage != form.cleaned_data['stage']
+            career_changed = exam.career != form.cleaned_data['career']
+
+            exam.stage = form.cleaned_data['stage']
+            exam.career = form.cleaned_data['career']
+            exam.save()
+
+            if stage_changed or career_changed:
+                exam.set_modules()
+                exam.set_questions()
+
+            return redirect('exam:aspirante_list')
+    else:
+        form = CandidateForm(initial={
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'username': user.username,
+            'stage': exam.stage,
+            'career': exam.career,
+        })
+
+    return render(request, 'admin/aspirante_edit.html', {'form': form, 'edit': True})
+
+@login_required
+def admin_home(request):
+    if not request.user.is_superuser:
+        return redirect('home')
+
+    # Obtener aspirantes (exámenes con usuario relacionado)
+    aspirantes = Exam.objects.select_related('user', 'stage', 'career').all().order_by('user__last_name')
+
+    # Obtener módulos para el div graf-container (como ya haces)
+    modulos = Module.objects.all()
+
+    return render(request, 'admin/home.html', {
+        'modulos': modulos,
+        'aspirantes': aspirantes,
+    })

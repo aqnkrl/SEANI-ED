@@ -1,0 +1,45 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Registrar Aspirante{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Registrar Aspirante</h1>
+
+<form method="post" class="formulario" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <label for="{{ form.first_name.id_for_label }}">Nombre:</label>
+    {{ form.first_name }}
+    {{ form.first_name.errors }}
+
+    <label for="{{ form.last_name.id_for_label }}">Apellido:</label>
+    {{ form.last_name }}
+    {{ form.last_name.errors }}
+
+    <label for="{{ form.email.id_for_label }}">Correo:</label>
+    {{ form.email }}
+    {{ form.email.errors }}
+
+    <label for="{{ form.username.id_for_label }}">Usuario:</label>
+    {{ form.username }}
+    {{ form.username.errors }}
+
+    <label for="{{ form.password.id_for_label }}">Contraseña:</label>
+    {{ form.password }}
+    {{ form.password.errors }}
+
+    <label for="{{ form.stage.id_for_label }}">Etapa:</label>
+    {{ form.stage }}
+    {{ form.stage.errors }}
+
+    <label for="{{ form.career.id_for_label }}">Carrera:</label>
+    {{ form.career }}
+    {{ form.career.errors }}
+
+    <div class="acciones-doble">
+        <button type="submit" class="guardar">Registrar</button>
+        <a href="{% url 'exam:aspirante_list' %}" class="cancelar">Cancelar</a>
+    </div>
+</form>
+{% endblock %}
