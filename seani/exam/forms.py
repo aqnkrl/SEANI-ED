@@ -27,8 +27,7 @@ class StageForm(forms.Form):
         label="Filtrar por carrera",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-
-# FORMULARIO PARA AGREGAR ETAPA
+# FORMULARIO PARA AGREGAR O EDITAR ETAPA
 class AddStageForm(forms.ModelForm):
     class Meta:
         model = Stage
@@ -40,13 +39,20 @@ class AddStageForm(forms.ModelForm):
                 'step': 1,
                 'placeholder': 'Número de etapa'
             }),
-            'application_date': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'form-control',
-                'placeholder': 'Fecha de aplicación'
-            }),
+            'application_date': forms.DateInput(
+                attrs={
+                    'type': 'date',
+                    'class': 'form-control',
+                    'placeholder': 'Fecha de aplicación'
+                },
+                format='%Y-%m-%d'  
+            ),
         }
         labels = {
             'stage': 'Número de Etapa',
             'application_date': 'Fecha de Aplicación',
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['application_date'].input_formats = ['%Y-%m-%d']

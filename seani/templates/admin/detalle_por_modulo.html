@@ -4,98 +4,163 @@
 {% block title %}Detalle por Módulo{% endblock %}
 
 {% block content %}
-    <h1 class="bienvenida">Detalles del Módulo {{ module_name }}</h1>
+<h1 class="bienvenida">
+  {% if selected_module %}
+    Detalles del Módulo {{ module_name }}
+  {% else %}
+    Promedios Generales por Módulo
+  {% endif %}
+</h1>
 
-    <div class="formulario-center">
-        <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
-            <div style="flex: 1;">
-                <label for="year">Año:</label>
-                <select name="year" id="year" class="campo-input">
-                    <option value="">Todos</option>
-                    {% for y in years %}
-                        <option value="{{ y.year }}" {% if y.year|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y.year }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+<div class="formulario-center">
+    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
+        <div style="flex: 1;">
+            <label for="year">Año:</label>
+            <select name="year" id="year" class="campo-input">
+                <option value="">Todos</option>
+                {% for y in years %}
+                    <option value="{{ y.year }}" {% if y.year|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y.year }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            <div style="flex: 1;">
-                <label for="stage">Etapa:</label>
-                <select name="stage" id="stage" class="campo-input">
-                    <option value="">Todas</option>
-                    {% for stg in stages %}
-                        <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <div style="flex: 1;">
+            <label for="stage">Etapa:</label>
+            <select name="stage" id="stage" class="campo-input">
+                <option value="">Todas</option>
+                {% for stg in stages %}
+                    <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            <div style="flex: 1;">
-                <label for="career">Carrera:</label>
-                <select name="career" id="career" class="campo-input">
-                    <option value="">Todas</option>
-                    {% for c in careers %}
-                        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+        <div style="flex: 1;">
+            <label for="career">Carrera:</label>
+            <select name="career" id="career" class="campo-input">
+                <option value="">Todas</option>
+                {% for c in careers %}
+                    <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-            <input type="hidden" name="module_id" value="{{ selected_module }}">
-            <div>
-                <button type="submit" class="guardar">Filtrar</button>
-            </div>
-        </form>
-    </div>
+        <input type="hidden" name="module_id" value="{{ selected_module }}">
+        <div>
+            <button type="submit" class="guardar">Filtrar</button>
+        </div>
+    </form>
+</div>
 
-    <div class="table-wrapper" style="margin-top: 2rem;">
-        <canvas id="chartDetalle" height="150"></canvas>
-    </div>
+{% if selected_module %}
+  <!-- Mostrar gráfica detallada por módulo -->
+  <div class="table-wrapper" style="margin-top: 2rem;">
+      <canvas id="chartDetalle" height="150"></canvas>
+  </div>
 
-    {{ chart_labels|json_script:"labels-json" }}
-    {{ chart_data|json_script:"chartdata-json" }}
+  {{ chart_labels|json_script:"labels-json" }}
+  {{ chart_data|json_script:"chartdata-json" }}
 
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-      const labels = JSON.parse(document.getElementById('labels-json').textContent);
-      const datasets = JSON.parse(document.getElementById('chartdata-json').textContent);
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const labels = JSON.parse(document.getElementById('labels-json').textContent);
+    const datasets = JSON.parse(document.getElementById('chartdata-json').textContent);
 
-      const ctx = document.getElementById('chartDetalle').getContext('2d');
-      const detalleChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: datasets
+    const ctx = document.getElementById('chartDetalle').getContext('2d');
+    const detalleChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: 'Detalle de Calificaciones - {{ module_name }}'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          },
+          legend: {
+            position: 'bottom'
+          }
         },
-        options: {
-          responsive: true,
-          plugins: {
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 10,
             title: {
               display: true,
-              text: 'Detalle de Calificaciones - {{ module_name }}'
-            },
-            tooltip: {
-              mode: 'index',
-              intersect: false
-            },
-            legend: {
-              position: 'bottom'
+              text: 'Promedio'
             }
           },
-          scales: {
-            y: {
-              beginAtZero: true,
-              max: 10,
-              title: {
-                display: true,
-                text: 'Promedio'
-              }
-            },
-            x: {
-              title: {
-                display: true,
-                text: 'Etapa'
-              }
+          x: {
+            title: {
+              display: true,
+              text: 'Etapa'
             }
           }
         }
-      });
-    </script>
+      }
+    });
+  </script>
+{% else %}
+  <!-- Mostrar gráfica resumen general por módulo -->
+  <div class="table-wrapper" style="margin-top: 2rem;">
+      <canvas id="chartResumen" height="150"></canvas>
+  </div>
+
+  {{ modulo_chart_labels|json_script:"modulo-labels-json" }}
+  {{ modulo_chart_data|json_script:"modulo-data-json" }}
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const moduloLabels = JSON.parse(document.getElementById('modulo-labels-json').textContent);
+    const moduloDataset = JSON.parse(document.getElementById('modulo-data-json').textContent);
+
+    const resumenCtx = document.getElementById('chartResumen').getContext('2d');
+    const resumenChart = new Chart(resumenCtx, {
+      type: 'bar',
+      data: {
+        labels: moduloLabels,
+        datasets: moduloDataset
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: 'Promedio General por Módulo'
+          },
+          tooltip: {
+            mode: 'index',
+            intersect: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 10,
+            title: {
+              display: true,
+              text: 'Promedio'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Etapa + Año'
+            }
+          }
+        }
+      }
+    });
+  </script>
+{% endif %}
 {% endblock %}

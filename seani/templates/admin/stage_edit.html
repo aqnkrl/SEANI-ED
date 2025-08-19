@@ -1,27 +1,26 @@
-{% extends 'base_admin.html' %}
+{% extends "base_admin.html" %}
+{% load static %}
 
 {% block title %}Editar Etapa{% endblock %}
 
 {% block content %}
 <h1 class="bienvenida">Editar Etapa</h1>
 
-<form method="post" class="formulario-etapa">
+<form method="post" class="formulario" novalidate>
     {% csrf_token %}
     {{ form.non_field_errors }}
 
-    <div class="campo-form">
-        <label for="id_stage">Número de Etapa:</label>
-        {{ form.stage }}
-        {{ form.stage.errors }}
-    </div>
+    <label for="{{ form.stage.id_for_label }}">Número de Etapa:</label>
+    {{ form.stage }}
+    {{ form.stage.errors }}
 
-    <div class="campo-form">
-        <label for="id_application_date">Fecha de Aplicación:</label>
-        {{ form.application_date }}
-        {{ form.application_date.errors }}
-    </div>
+    <label for="{{ form.application_date.id_for_label }}">Fecha de Aplicación:</label>
+    {{ form.application_date }}
+    {{ form.application_date.errors }}
 
-    <button type="submit" class="btn-guardar">Guardar Cambios</button>
-    <a href="{% url 'exam:stage_list' %}" class="cancelar">Cancelar</a>
+    <div class="acciones-doble">
+        <button type="submit" class="guardar">Guardar Cambios</button>
+        <a href="{% url 'exam:stage_list' %}" class="cancelar">Cancelar</a>
+    </div>
 </form>
 {% endblock %}

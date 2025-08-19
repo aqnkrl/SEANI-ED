@@ -361,7 +361,7 @@ def stage_edit(request, pk):
             return redirect('exam:stage_list')
     else:
         form = AddStageForm(instance=stage)
-    return render(request, 'admin/stage_add.html', { 'form': form, 'edit': True })
+    return render(request, 'admin/stage_edit.html', { 'form': form, 'edit': True })
 
 @login_required
 def stage_delete(request, pk):
@@ -466,8 +466,6 @@ def admin_home(request):
 # ---------------------------------------------------
 # Vista para detalle por módulo con filtros y gráfica
 # ------------------------------------------------------------------------------------
-# Detalle por Módulo
-
 @login_required
 def detalle_por_modulo(request):
     if not request.user.is_superuser:
@@ -478,7 +476,7 @@ def detalle_por_modulo(request):
     selected_year = request.GET.get('year')
     module_id = request.GET.get('module_id')
 
-    exams = Exam.objects.select_related('stage', 'career').all()
+    exams = Exam.objects.select_related('stage', 'career').prefetch_related('exammodule_set__module').all()
 
     if selected_stage:
         exams = exams.filter(stage__stage=selected_stage)
@@ -518,10 +516,9 @@ def detalle_por_modulo(request):
             label = f"Etapa {stage_num} - {year}"
             grouped[label][career_name].append(mod_score)
 
-    all_labels = sorted(grouped.keys())  # Etapa + Año
+    all_labels = sorted(grouped.keys())
     all_careers = sorted({c for label in grouped.values() for c in label.keys()})
 
-    # Paleta de colores vibrantes y únicos
     vibrant_colors = [
         '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231',
         '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe',
@@ -529,7 +526,6 @@ def detalle_por_modulo(request):
         '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080'
     ]
 
-    # Construir datos para Chart.js
     chart_labels = all_labels
     chart_data = []
 
@@ -546,7 +542,43 @@ def detalle_por_modulo(request):
             'backgroundColor': vibrant_colors[color_index]
         })
 
-    # Obtener nombre del módulo
+    # Promedios por módulo agrupados por etapa + año
+    modulos = Module.objects.filter(id__in=[1, 2, 3, 4])
+    modulo_chart_labels = sorted(set(
+        f"Etapa {exam.stage.stage} - {exam.stage.application_date.year}"
+        for exam in exams if exam.stage and exam.stage.application_date
+    ))
+
+    modulo_chart_data = []
+
+    modulo_colors = {
+        1: '#3b82f6',  # Comprensión Lectora
+        2: '#facc15',  # Estructura de la Lengua
+        3: '#ef4444',  # Pensamiento Matemático
+        4: '#8b5cf6',  # Pensamiento Analítico
+    }
+
+    for mod in modulos:
+        data = []
+        for label in modulo_chart_labels:
+            etapa_num, year = label.replace("Etapa ", "").split(" - ")
+            etapa_num = int(etapa_num)
+            year = int(year)
+            scores = []
+            for exam in exams:
+                if exam.stage and exam.stage.stage == etapa_num and exam.stage.application_date.year == year:
+                    for ex_mod in exam.exammodule_set.all():
+                        if ex_mod.module.id == mod.id and ex_mod.score is not None:
+                            scores.append(ex_mod.score)
+            avg = round(sum(scores) / len(scores), 2) if scores else 0
+            data.append(avg)
+
+        modulo_chart_data.append({
+            'label': mod.name,
+            'data': data,
+            'backgroundColor': modulo_colors.get(mod.id, '#999999')
+        })
+
     if module_id:
         try:
             module_obj = Module.objects.get(id=module_id)
@@ -556,7 +588,6 @@ def detalle_por_modulo(request):
     else:
         module_name = "General"
 
-    # Opciones para los filtros
     stages = Stage.objects.values_list('stage', flat=True).distinct().order_by('stage')
     years = Stage.objects.dates('application_date', 'year').distinct()
     careers = Career.objects.all()
@@ -564,6 +595,8 @@ def detalle_por_modulo(request):
     context = {
         'chart_labels': chart_labels,
         'chart_data': chart_data,
+        'modulo_chart_labels': modulo_chart_labels,
+        'modulo_chart_data': modulo_chart_data,
         'years': years,
         'stages': stages,
         'careers': careers,

@@ -625,3 +625,32 @@ body {
     justify-content: center;
     margin-bottom: 2rem;
 }
+
+.resumen-horizontal {
+  max-width: 100%;         /* Más angosto que 100% */
+  margin: 0 auto 2rem auto; /* Centrado con margen inferior */
+  padding: 1.5rem;
+  border: 4px solid #d1d5db; /* Gris claro */
+  border-radius: 12px;
+  background-color: #f9fafb;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.resumen-horizontal h3 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 0.5rem;
+}
+
+.resumen-horizontal .graf-msg {
+  font-size: 1rem;
+  color: #4b5563;
+}
+
+.resumen-horizontal .mod-svg {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 0.5rem;
+}
+
