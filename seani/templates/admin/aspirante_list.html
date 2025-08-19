@@ -1,0 +1,45 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Lista de Aspirantes{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Lista de Aspirantes</h1>
+
+<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+  <a href="{% url 'exam:aspirante_add' %}" class="btn-agregar">Agregar nuevo aspirante</a>
+</div>
+
+<div class="table-wrapper">
+  <table class="results-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Usuario</th>
+        <th>Email</th>
+        <th>Etapa</th>
+        <th>Carrera</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for aspirante in aspirantes %}
+      <tr>
+        <td>{{ aspirante.user.first_name }} {{ aspirante.user.last_name }}</td>
+        <td>{{ aspirante.user.username }}</td>
+        <td>{{ aspirante.user.email }}</td>
+        <td>{{ aspirante.stage.stage }}</td>
+        <td>{{ aspirante.career.name }}</td>
+        <td>
+          <a href="{% url 'exam:aspirante_edit' aspirante.pk %}" class="editar">Editar</a>
+          <a href="{% url 'exam:aspirante_delete' aspirante.pk %}" class="eliminar">Eliminar</a>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" style="text-align:center; color:#777;">No hay aspirantes registrados.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

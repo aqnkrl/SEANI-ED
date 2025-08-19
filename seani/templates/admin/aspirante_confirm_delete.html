@@ -1,0 +1,21 @@
+{% extends 'base_admin.html' %}
+
+{% block title %}Eliminar Aspirante{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Eliminar Aspirante</h1>
+
+<div class="eliminar-contenedor">
+    <p>
+        ¿Estás seguro de que deseas eliminar al aspirante 
+        <strong>{{ aspirante.user.first_name }} {{ aspirante.user.last_name }}</strong>
+        con usuario <strong>{{ aspirante.user.username }}</strong>?
+    </p>
+
+    <form method="post" class="eliminar-formulario">
+        {% csrf_token %}
+        <button type="submit" class="btn-eliminar">Eliminar</button>
+        <a href="{% url 'exam:aspirante_list' %}" class="btn-cancelar">Cancelar</a>
+    </form>
+</div>
+{% endblock %}
