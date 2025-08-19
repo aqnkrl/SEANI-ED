@@ -701,3 +701,4 @@ def admin_home(request):
         'modulos': modulos,
         'aspirantes': aspirantes,
     })
+
