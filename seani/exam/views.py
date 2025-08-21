@@ -632,13 +632,24 @@ def debug_exam_data(request):
 # ----------------------------------------------------
 # CRUD de Aspirantes
 
+from django.db.models import Q
+
 @login_required
 def aspirante_list(request):
-    if not request.user.is_superuser:
-        return redirect('home')
-
+    query = request.GET.get('q')
     aspirantes = Exam.objects.select_related('user', 'stage', 'career').order_by('user__last_name')
-    return render(request, 'admin/aspirante_list.html', { 'aspirantes': aspirantes })
+
+    if query:
+        aspirantes = aspirantes.filter(
+            Q(user__first_name__icontains=query) | Q(user__last_name__icontains=query)
+        )
+
+    return render(request, 'admin/aspirante_list.html', {
+        'aspirantes': aspirantes
+    })
+
+from django.contrib.auth.models import User
+from .models import Exam
 
 @login_required
 def aspirante_add(request):
@@ -648,8 +659,23 @@ def aspirante_add(request):
     if request.method == 'POST':
         form = CandidateForm(request.POST)
         if form.is_valid():
-            # Guardar nuevo aspirante
-            return redirect('exam:aspirante_add')  
+            cd = form.cleaned_data
+
+            user = User.objects.create_user(
+                username=cd['username'],
+                email=cd['email'],
+                password=cd['password'],
+                first_name=cd['first_name'],
+                last_name=cd['last_name']
+            )
+
+            Exam.objects.create(
+                user=user,
+                stage=cd['stage'],
+                career=cd['career']
+            )
+
+            return redirect('exam:aspirante_list')
     else:
         form = CandidateForm()
 
@@ -660,6 +686,8 @@ def aspirante_add(request):
         'form': form,
         'aspirantes': aspirantes,
     })
+
+
 
 @login_required
 def aspirante_delete(request, pk):
@@ -734,4 +762,7 @@ def admin_home(request):
         'modulos': modulos,
         'aspirantes': aspirantes,
     })
+
+
+
 

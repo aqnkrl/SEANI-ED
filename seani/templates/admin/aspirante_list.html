@@ -5,7 +5,19 @@
 {% block content %}
 <h1 class="bienvenida">Lista de Aspirantes</h1>
 
-<div style="display: flex; justify-content: flex-end; margin-bottom: 1rem;">
+<div style="display: flex; justify-content: space-between; margin-bottom: 1rem; align-items: center;">
+
+  <!-- 🔎 Buscador con botón -->
+  <form method="get" action="" style="flex: 1; max-width: 400px; display: flex;">
+    <input type="text" name="q" placeholder="Buscar por nombre o apellidos..." 
+           value="{{ request.GET.q }}" 
+           style="flex: 1; padding: 0.5rem; border: 1px solid #ccc; border-radius: 10px 0 0 10px; outline: none;">
+    <button type="submit" class="btn-buscar">
+      BUSCAR
+    </button>
+  </form>
+
+  <!-- Botón agregar aspirante -->
   <a href="{% url 'exam:aspirante_add' %}" class="btn-agregar">Agregar nuevo aspirante</a>
 </div>
 

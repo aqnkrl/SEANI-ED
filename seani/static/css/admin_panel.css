@@ -654,3 +654,67 @@ body {
   margin-bottom: 0.5rem;
 }
 
+
+
+/* Contenedor de cabecera (buscador + botón) */
+.aspirante-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+
+
+/* 🔎 Estilos para el buscador */
+.search-form {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.6rem 2.5rem 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  font-size: 14px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 6px rgba(0,123,255,0.3);
+  outline: none;
+}
+
+.search-icon {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #888;
+  font-size: 16px;
+  pointer-events: none;
+}
+
+
+.btn-buscar {
+    background-color: #198754;
+    color: white;
+    padding: 0.5rem 1.2rem;
+    border-radius: 10px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    border: none;
+}
+
+.btn-buscar:hover {
+    background-color: #157347; /* un verde un poco más oscuro al pasar el mouse */
+    transform: translateY(-1px);
+}
+
+
