@@ -1,0 +1,103 @@
+{% extends 'base_admin.html' %}
+
+
+{% block title %}Analítica Predictiva SEANI{% endblock %}
+
+{% block content %}
+<h1 class="bienvenida">Módulos de Analítica Predictiva SEANI</h1>
+
+<div class="graf-container">
+  {% for key, info in ed_models.items %}
+  <div class="graf-box 
+    {% if key == 'separables' %}azul{% endif %}
+    {% if key == 'homogeneas' %}amarillo{% endif %}
+    {% if key == 'exactas' %}rojo{% endif %}
+    {% if key == 'factor' %}morado{% endif %}
+    {% if key == 'lineales' %}naranja{% endif %}
+    {% if key == 'variacion' %}verde{% endif %}
+    {% if key == 'bernoulli' %}rosa{% endif %}
+    {% if key == 'laplace' %}cian{% endif %}
+  " data-model-key="{{ key }}">
+    
+    <h3>{{ info.titulo }}</h3>
+    
+    <div class="mod-animation">
+        <svg class="mod-svg" viewBox="0 0 64 64" stroke="currentColor" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 60px; height: 60px;">
+            {% if key == 'separables' %}
+                <path d="M10 50 Q 30 10 54 50" stroke-width="3"/>
+            {% elif key == 'bernoulli' %}
+                <path d="M10 50 C 20 50, 25 15, 54 15" stroke-width="3"/>
+            {% else %}
+                <path d="M10 50 L 25 35 L 40 45 L 54 15" stroke-width="3"/>
+            {% endif %}
+            <circle cx="54" cy="15" r="2" fill="currentColor"/>
+        </svg>
+    </div>
+
+    <div class="graf-msg">{{ info.desc }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    document.querySelectorAll('.graf-box').forEach(box => {
+      box.addEventListener('click', () => {
+        const modelKey = box.getAttribute('data-model-key');
+        if (modelKey) {
+          window.location.href = "{% url 'analytics:graficar' 'placeholder' %}".replace('placeholder', modelKey);
+        }
+      });
+    });
+  });
+</script>
+
+<style>
+    .graf-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); 
+        gap: 20px;
+        padding: 20px;
+    }
+
+    .graf-box {
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        text-align: center;
+        cursor: pointer;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+        border: 4px solid #eee; 
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    /* 8 Colores Únicos para los Bordes */
+    .graf-box.azul { border-color: #36A2EB; color: #36A2EB; }
+    .graf-box.amarillo { border-color: #FFCE56; color: #cca300; }
+    .graf-box.rojo { border-color: #FF6384; color: #FF6384; }
+    .graf-box.morado { border-color: #9966FF; color: #9966FF; }
+    .graf-box.naranja { border-color: #FF9F40; color: #FF9F40; }
+    .graf-box.verde { border-color: #4BC0C0; color: #4BC0C0; }
+    .graf-box.rosa { border-color: #f032e6; color: #f032e6; }
+    .graf-box.cian { border-color: #008080; color: #008080; }
+
+    .graf-box:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+
+    .graf-msg {
+        margin-top: 15px;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    h3 {
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

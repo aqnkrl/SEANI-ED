@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'career.apps.CareerConfig',
     'exam.apps.ExamConfig',
     'home.apps.HomeConfig',
+    'analytics',
     # Django Apps
     'django.contrib.admin',
     'django.contrib.auth',

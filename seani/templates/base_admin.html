@@ -39,6 +39,11 @@
 {% url 'exam:home_screen_table' as url_home_screen %}
 <a href="{{ url_home_screen }}" class="{% if request.resolver_match.url_name == 'home_screen_table' %}activo{% endif %}">Pantallas de Inicio</a>
 
+{% url 'analytics:dashboard' as url_analytics %}
+<a href="{{ url_analytics }}" class="{% if 'analytics' in request.path %}activo{% endif %}">
+    <i class="fas fa-chart-line"></i>
+    <span>Analítica Predictiva (ED)</span>
+</a>
 
 
 

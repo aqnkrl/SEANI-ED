@@ -9,4 +9,6 @@ urlpatterns = [
     path('', include('exam.urls')),
     path('admin-django/', admin.site.urls),
     path('logout/', LogoutView.as_view(), name='logout'), #agregada ruta de cierre de sesión
+    path('analytics/', include('analytics.urls')),
+    
 ]
