@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="seani-header">
-  <h1 class="bienvenida">📊 Módulos de Analítica Predictiva</h1>
+  <h1 class="bienvenida"> Módulos de Analítica Predictiva</h1>
   <p class="seani-subtitle">
     Modelos matemáticos basados en <strong>Ecuaciones Diferenciales y Transformadas de Laplace</strong>
     aplicados al análisis del desempeño académico de aspirantes.
@@ -15,7 +15,7 @@
   {% for key, info in ed_models.items %}
   <div class="graf-box color-{{ info.color }}" data-model-key="{{ key }}">
 
-    <div class="graf-icon">
+    <div class="graf-icon mod-svg-animation">
       <svg viewBox="0 0 64 50" stroke="currentColor" fill="none"
            xmlns="http://www.w3.org/2000/svg" width="56" height="44">
         {% if key == 'separables' %}
@@ -40,12 +40,7 @@
     </div>
 
     <h3>{{ info.titulo }}</h3>
-    <div class="graf-badge">{{ info.meta }}</div>
     <div class="graf-msg">{{ info.desc }}</div>
-
-    <div class="graf-footer">
-      <span class="graf-btn">Ver análisis →</span>
-    </div>
   </div>
   {% endfor %}
 </div>
@@ -68,86 +63,79 @@
   .graf-container {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
+    gap: 20px;
     padding: 22px;
   }
 
   .graf-box {
     background: white;
-    padding: 22px 18px 16px;
+    padding: 45px 20px; 
+    min-height: 330px;   
     border-radius: 14px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-    border: 3px solid #eee;
+    transition: all 0.3s ease;
+    /* Contorno de 3px con el color del modelo */
+    border: 4px solid var(--model-color, #eee); 
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    gap: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    color: var(--model-color, #333);
   }
+
   .graf-box:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    transform: translateY(-8px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
   }
 
-  .color-azul    { border-color: #36A2EB; color: #36A2EB; }
-  .color-amarillo{ border-color: #e6b800; color: #c9a200; }
-  .color-rojo    { border-color: #FF6384; color: #FF6384; }
-  .color-morado  { border-color: #9966FF; color: #9966FF; }
-  .color-naranja { border-color: #FF9F40; color: #FF9F40; }
-  .color-verde   { border-color: #4BC0C0; color: #4BC0C0; }
-  .color-rosa    { border-color: #e040fb; color: #e040fb; }
-  .color-cian    { border-color: #00897b; color: #00897b; }
-
-  .graf-icon svg { opacity: 0.85; }
-
+  /* Título h3 con el color del modelo */
   .graf-box h3 {
-    margin: 0;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #222;
-  }
-
-  .graf-badge {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 2px 10px;
-    border-radius: 20px;
-    background: currentColor;
-    color: white !important;
-    opacity: 0.85;
+    margin: 10px 0 0;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: inherit; 
+    line-height: 1.2;
   }
 
   .graf-msg {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     color: #666;
-    line-height: 1.4;
+    line-height: 1.5;
     flex-grow: 1;
   }
 
-  .graf-footer { margin-top: 6px; }
-  .graf-btn {
-    font-size: 0.78rem;
-    font-weight: 600;
-    padding: 5px 14px;
-    border-radius: 20px;
-    border: 2px solid currentColor;
-    background: transparent;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .graf-box:hover .graf-btn {
-    background: currentColor;
-    color: white !important;
+  /* --- Lógica de Animación --- */
+  .mod-svg-animation {
+    transition: transform 0.3s ease;
   }
 
-  @media (max-width: 900px) {
+  /* Solo se activa la animación cuando el padre (.graf-box) recibe el hover */
+  .graf-box:hover .mod-svg-animation {
+    animation: floatingHover 2s ease-in-out infinite;
+  }
+
+  @keyframes floatingHover {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+
+  /* Variables de Color */
+  .color-azul     { --model-color: #36A2EB; }
+  .color-amarillo { --model-color: #e6b800; }
+  .color-rojo     { --model-color: #FF6384; }
+  .color-morado   { --model-color: #9966FF; }
+  .color-naranja  { --model-color: #FF9F40; }
+  .color-verde    { --model-color: #4BC0C0; }
+  .color-rosa     { --model-color: #e040fb; }
+  .color-cian     { --model-color: #00897b; }
+
+  @media (max-width: 1100px) {
     .graf-container { grid-template-columns: repeat(2, 1fr); }
   }
-  @media (max-width: 500px) {
+  @media (max-width: 600px) {
     .graf-container { grid-template-columns: 1fr; }
   }
 </style>

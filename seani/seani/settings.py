@@ -91,7 +91,7 @@ WSGI_APPLICATION = 'seani.wsgi.application'
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'seanijul30',
 #         'USER': '',
-#         'PASSWORD': 'flor1234',
+#         'PASSWORD': 'Karla2411',
 #         'HOST': 'localhost',
 #         'PORT': '5432',
 #     }
@@ -100,9 +100,9 @@ WSGI_APPLICATION = 'seani.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'seanijul30',
+        'NAME': 'seanijul25',
         'USER': 'root',
-        'PASSWORD': 'flor1234',
+        'PASSWORD': 'Karla2411',
         'HOST': 'localhost',
         'PORT': '3306',
     }
