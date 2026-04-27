@@ -1,128 +1,390 @@
 {% extends 'base_admin.html' %}
 {% load static %}
 
-{% block title %}Análisis Predictivo: {{ modelo }}{% endblock %}
+{% block title %}Análisis: {{ modelo }}{% endblock %}
 
 {% block content %}
-<h1 class="bienvenida">Análisis de Ecuación Diferencial: {{ modelo }}</h1>
 
-<div class="formulario-center">
-    <form method="get" class="formulario formulario--left" style="display: flex; gap: 1.5rem; align-items: flex-end; flex-wrap: wrap;">
-        <div style="flex: 1;">
-            <label for="year">Año:</label>
-        <select name="year" id="year" class="campo-input">
-                <option value="">Todos</option>
-                {% for y in years %}
-                    <option value="{{ y.year }}" {% if y.year|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>{{ y.year }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div style="flex: 1;">
-            <label for="stage">Etapa:</label>
-            <select name="stage" id="stage" class="campo-input">
-                <option value="">Todas</option>
-                {% for stg in stages %}
-                    <option value="{{ stg }}" {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>Etapa {{ stg }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div style="flex: 1;">
-            <label for="career">Carrera:</label>
-            <select name="career" id="career" class="campo-input">
-                <option value="">Todas</option>
-                {% for c in careers %}
-                    <option value="{{ c.id }}" {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <button type="submit" class="guardar">Filtrar</button>
-        </div>
-    </form>
+{# ============================================================ #}
+{# ENCABEZADO                                                   #}
+{# ============================================================ #}
+<div style="display:flex; align-items:center; gap:14px; padding: 4px 0 16px;">
+  <a href="{% url 'analytics:dashboard' %}"
+     style="text-decoration:none; font-size:0.9rem; color:#6c757d;">
+    ← Volver al Dashboard
+  </a>
+  <h1 class="bienvenida" style="margin:0; flex-grow:1;">
+    Análisis: {{ info.titulo }}
+  </h1>
 </div>
 
-<div class="table-wrapper" style="margin-top: 2rem; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-    <canvas id="chartPredictivo" height="110"></canvas>
+{# ============================================================ #}
+{# PANEL INFORMATIVO DE LA ED                                   #}
+{# ============================================================ #}
+<div class="info-panel">
+  <div class="info-block">
+    <span class="info-label">Ecuación Diferencial</span>
+    <code class="info-formula">{{ desc_ed }}</code>
+  </div>
+  <div class="info-block">
+    <span class="info-label">Aplicación en SEANI</span>
+    <span class="info-text">{{ desc_app }}</span>
+  </div>
+  <div class="info-block">
+    <span class="info-label">Condición Inicial (y₀)</span>
+    <span class="info-text">y(0) = <strong>{{ y0 }}</strong> (promedio real de exámenes)</span>
+  </div>
 </div>
 
-{{ chart_labels|json_script:"labels-json" }}
-{{ chart_data|json_script:"datasets-json" }}
+{# ============================================================ #}
+{# FILTROS: DATOS REALES                                        #}
+{# ============================================================ #}
+<div class="seccion-card">
+  <h2 class="seccion-titulo">📈 Datos Reales por Carrera</h2>
+  <form method="get" class="filtros-form">
+    {# Preservar parámetros del modelo #}
+    {% for p in params_info %}
+      <input type="hidden" name="{{ p.name }}" value="{{ params|default_if_none:'' }}">
+    {% endfor %}
+
+    <div class="filtro-grupo">
+      <label>Año</label>
+      <select name="year" class="campo-input">
+        <option value="">Todos</option>
+        {% for y in years %}
+          <option value="{{ y.year }}"
+            {% if y.year|stringformat:"s" == selected_year|stringformat:"s" %}selected{% endif %}>
+            {{ y.year }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filtro-grupo">
+      <label>Etapa</label>
+      <select name="stage" class="campo-input">
+        <option value="">Todas</option>
+        {% for stg in stages %}
+          <option value="{{ stg }}"
+            {% if stg|stringformat:"s" == selected_stage|stringformat:"s" %}selected{% endif %}>
+            Etapa {{ stg }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="filtro-grupo">
+      <label>Carrera</label>
+      <select name="career" class="campo-input">
+        <option value="">Todas</option>
+        {% for c in careers %}
+          <option value="{{ c.id }}"
+            {% if c.id|stringformat:"s" == selected_career|stringformat:"s" %}selected{% endif %}>
+            {{ c.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="guardar">Filtrar</button>
+  </form>
+
+  <div class="chart-wrapper">
+    <canvas id="chartReales" height="100"></canvas>
+  </div>
+</div>
+
+
+{# ============================================================ #}
+{# PARÁMETROS DEL MODELO MATEMÁTICO                            #}
+{# ============================================================ #}
+<div class="seccion-card">
+  <h2 class="seccion-titulo">⚙️ Parámetros del Modelo Matemático</h2>
+  <p style="color:#666; font-size:0.88rem; margin-bottom:12px;">
+    Modifica los parámetros de la ED para observar cómo cambia el comportamiento del sistema.
+    Se comparan la <strong>solución analítica exacta</strong> vs. los métodos numéricos.
+  </p>
+
+  <form method="get" class="filtros-form" id="formParams">
+    {# Preservar filtros de datos reales #}
+    {% if selected_year %}<input type="hidden" name="year" value="{{ selected_year }}">{% endif %}
+    {% if selected_stage %}<input type="hidden" name="stage" value="{{ selected_stage }}">{% endif %}
+    {% if selected_career %}<input type="hidden" name="career" value="{{ selected_career }}">{% endif %}
+
+    {% for p in params_info %}
+    <div class="filtro-grupo param-grupo">
+      <label>{{ p.label }}</label>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <input type="range"
+               name="{{ p.name }}"
+               id="range_{{ p.name }}"
+               min="{{ p.min }}" max="{{ p.max }}" step="{{ p.step }}"
+               value="{{ params|default_if_none:'' }}"
+               class="param-slider"
+               oninput="document.getElementById('val_{{ p.name }}').textContent = this.value">
+        <span id="val_{{ p.name }}" class="param-val">{{ params|default_if_none:'' }}</span>
+      </div>
+      <small style="color:#999;">{{ p.help }}</small>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="guardar">Recalcular Modelo</button>
+  </form>
+
+  {# Inicializar valores de los sliders #}
+{{ params_info|json_script:"params-data" }}
+
+<script>
+  (function() {
+    // 2. Leemos el JSON desde el DOM
+    const paramsInfo = JSON.parse(document.getElementById('params-data').textContent);
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // 3. Iteramos con JS puro, no con etiquetas de Django dentro del script
+    paramsInfo.forEach(p => {
+      const slider = document.getElementById(`range_${p.name}`);
+      const valDisplay = document.getElementById(`val_${p.name}`);
+      
+      if (slider && valDisplay) {
+        const urlVal = urlParams.get(p.name);
+        const v = urlVal ? parseFloat(urlVal) : p.default;
+        
+        slider.value = v;
+        valDisplay.textContent = v;
+      }
+    });
+  })();
+</script>
+</div>
+
+{# ============================================================ #}
+{# GRÁFICA DE COMPARACIÓN: ANALÍTICA vs NUMÉRICOS              #}
+{# ============================================================ #}
+<div class="seccion-card">
+  <h2 class="seccion-titulo">🔬 Comparación: Analítica vs. Métodos Numéricos</h2>
+
+  {# Tabla de errores #}
+  <div class="error-tabla">
+    <table>
+      <thead>
+        <tr>
+          <th>Método</th>
+          <th>Error Absoluto Medio (MAE)</th>
+          <th>Precisión</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="row-analitica">
+          <td>✅ Solución Analítica</td>
+          <td>0.0000 (exacta)</td>
+          <td>⭐⭐⭐⭐⭐</td>
+        </tr>
+        <tr>
+          <td>🔴 Euler</td>
+          <td>{{ errores.euler }}</td>
+          <td>{% if errores.euler < 0.05 %}⭐⭐⭐⭐{% elif errores.euler < 0.2 %}⭐⭐⭐{% else %}⭐⭐{% endif %}</td>
+        </tr>
+        <tr>
+          <td>🟠 Euler Mejorado (Heun)</td>
+          <td>{{ errores.euler_mejorado }}</td>
+          <td>{% if errores.euler_mejorado < 0.02 %}⭐⭐⭐⭐⭐{% elif errores.euler_mejorado < 0.1 %}⭐⭐⭐⭐{% else %}⭐⭐⭐{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="chart-wrapper">
+    <canvas id="chartModelo" height="110"></canvas>
+  </div>
+
+  <p class="nota-metodo">
+    <strong>Euler:</strong> y<sub>n+1</sub> = y<sub>n</sub> + h·f(t<sub>n</sub>, y<sub>n</sub>) &nbsp;|&nbsp;
+    <strong>Euler Mejorado:</strong> predictor-corrector con promedio de pendientes
+  </p>
+</div>
+
+{# ============================================================ #}
+{# DATOS JSON PARA CHART.JS                                    #}
+{# ============================================================ #}
+{{ chart_labels|json_script:"labels-reales-json" }}
+{{ chart_data|json_script:"datasets-reales-json" }}
+{{ labels_modelo|json_script:"labels-modelo-json" }}
+{{ datasets_modelo|json_script:"datasets-modelo-json" }}
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const labels = JSON.parse(document.getElementById('labels-json').textContent);
-    let datasets = JSON.parse(document.getElementById('datasets-json').textContent);
+  // --- Gráfica 1: Datos Reales ---
+  const labelsReales   = JSON.parse(document.getElementById('labels-reales-json').textContent);
+  const datasetsReales = JSON.parse(document.getElementById('datasets-reales-json').textContent);
 
-    // Ajustamos visualmente los datasets para que no sean barras amontonadas
-    datasets = datasets.map(ds => {
-        if (ds.type === 'line') {
-            // Estilo para la línea de Predicción Matemática
-            return {
-                ...ds,
-                borderWidth: 4,
-                pointRadius: 5,
-                pointHoverRadius: 8,
-                zIndex: 10 // Que siempre esté arriba
-            };
-        } else {
-            // Convertimos las barras de carreras en líneas suaves
-            return {
-                ...ds,
-                type: 'line',
-                fill: false,
-                borderColor: ds.backgroundColor, // Usamos el mismo color que tenía la barra
-                borderWidth: 2,
-                tension: 0.3,
-                pointRadius: 3
-            };
-        }
-    });
-const ctx = document.getElementById('chartPredictivo').getContext('2d');
-    new Chart(ctx, {
-        type: 'line', 
-        data: {
-            labels: labels,
-            datasets: datasets
+  new Chart(document.getElementById('chartReales').getContext('2d'), {
+    type: 'line',
+    data: { labels: labelsReales, datasets: datasetsReales },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Promedio Real por Carrera / Etapa', font: { size: 15 } },
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } }
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: 10,
+          title: { display: true, text: 'Calificación Promedio (0–10)', font: { weight: 'bold' } }
         },
-        options: {
-            responsive: true,
-            // --- AGREGAR ESTO PARA FORZAR CURVAS ---
-            elements: {
-                line: {
-                    tension: 0.4 // Esto suaviza todas las líneas (0.0 es recto, 0.4 es curvo)
-                }
-            },
-            interaction: {
-                mode: 'index',
-                intersect: false
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Tendencia Real por Carrera vs. Modelo Matemático ({{ modelo }})',
-                    font: { size: 16 }
-                },
-                legend: {
-                    position: 'bottom',
-                    labels: { usePointStyle: true, padding: 20 }
-                }
-            },
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 10,
-                    title: { display: true, text: 'Calificación (0-10)', font: { weight: 'bold' } },
-                    grid: { color: '#f0f0f0' }
-                },
-                x: {
-                    title: { display: true, text: 'Progreso por Etapas', font: { weight: 'bold' } },
-                    grid: { display: false }
-                }
+        x: { title: { display: true, text: 'Etapa', font: { weight: 'bold' } } }
+      }
+    }
+  });
+
+  // --- Gráfica 2: Modelo Matemático ---
+  const labelsModelo   = JSON.parse(document.getElementById('labels-modelo-json').textContent);
+  const datasetsModelo = JSON.parse(document.getElementById('datasets-modelo-json').textContent);
+
+  new Chart(document.getElementById('chartModelo').getContext('2d'), {
+    type: 'line',
+    data: { labels: labelsModelo, datasets: datasetsModelo },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Solución Analítica vs Euler vs Euler Mejorado',
+          font: { size: 15 }
+        },
+        legend: { position: 'bottom', labels: { usePointStyle: true, padding: 16 } },
+        tooltip: {
+          callbacks: {
+            label: function(ctx) {
+              return ` ${ctx.dataset.label}: ${ctx.parsed.y.toFixed(4)}`;
             }
+          }
         }
-    });
+      },
+      scales: {
+        y: {
+          beginAtZero: true, max: 10,
+          title: { display: true, text: 'y(t) — Valor del modelo', font: { weight: 'bold' } }
+        },
+        x: { title: { display: true, text: 'Paso de tiempo (t)', font: { weight: 'bold' } } }
+      }
+    }
+  });
 </script>
+
+<style>
+  .seccion-card {
+    background: white;
+    border-radius: 14px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .seccion-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+  }
+  .info-panel {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 22px;
+    border-left: 4px solid #198754;
+  }
+  .info-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    min-width: 180px;
+  }
+  .info-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #888;
+    font-weight: 600;
+  }
+  .info-formula {
+    font-family: 'Courier New', monospace;
+    font-size: 0.92rem;
+    background: #e9f5ee;
+    padding: 4px 10px;
+    border-radius: 6px;
+    color: #155724;
+  }
+  .info-text { font-size: 0.9rem; color: #333; }
+
+  .filtros-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+  }
+  .filtro-grupo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 140px;
+  }
+  .filtro-grupo label { font-size: 0.82rem; font-weight: 600; color: #555; }
+
+  .param-grupo { min-width: 200px; }
+  .param-slider { width: 140px; accent-color: #198754; }
+  .param-val {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #198754;
+    min-width: 36px;
+    text-align: center;
+  }
+
+  .chart-wrapper {
+    background: #fafafa;
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .error-tabla {
+    margin-bottom: 20px;
+    overflow-x: auto;
+  }
+  .error-tabla table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+  .error-tabla th {
+    background: #198754;
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+  }
+  .error-tabla td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #eee;
+  }
+  .error-tabla .row-analitica td { background: #e9f5ee; font-weight: 600; }
+  .error-tabla tr:hover td { background: #f5f5f5; }
+
+  .nota-metodo {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 14px;
+    text-align: center;
+  }
+
+  @media (max-width: 700px) {
+    .info-panel { flex-direction: column; }
+    .filtros-form { flex-direction: column; }
+  }
+</style>
 {% endblock %}

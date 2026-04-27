@@ -20,26 +20,27 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY')
+# SECRET_KEY = os.environ.get('SECRET_KEY')
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-clave-local')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG') == 'True'
+DEBUG = True
 
 # DEBUG in False need an ip address or a domain in ALOWED HOSTS, This is in a Production Environment
 if os.environ.get('DEBUG') == 'True':
     ALLOWED_HOSTS = []
 else:
-    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS').split(' ')
+    ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '127.0.0.1 localhost').split(' ')
 
 # Application definition
 
 INSTALLED_APPS = [
     # Local Apps
+    'analytics',
     'library.apps.LibraryConfig',
     'career.apps.CareerConfig',
     'exam.apps.ExamConfig',
     'home.apps.HomeConfig',
-    'analytics',
     # Django Apps
     'django.contrib.admin',
     'django.contrib.auth',
@@ -85,25 +86,27 @@ WSGI_APPLICATION = 'seani.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-if os.environ.get('DB_ENGINE') == 'sqlite3':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'djngo.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.' + os.environ.get('DB_ENGINE'),
-            'NAME': os.environ.get('DB_NAME'),
-            'USER': os.environ.get('DB_USER'),
-            'PASSWORD': os.environ.get('DB_PASSWORD'),
-            'HOST': os.environ.get('DB_HOST'),
-            'PORT': os.environ.get('DB_PORT'),
-        }
-    }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'seanijul30',
+#         'USER': '',
+#         'PASSWORD': 'flor1234',
+#         'HOST': 'localhost',
+#         'PORT': '5432',
+#     }
+# }
 
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'seanijul30',
+        'USER': 'root',
+        'PASSWORD': 'flor1234',
+        'HOST': 'localhost',
+        'PORT': '3306',
+    }
+}
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
